@@ -1,0 +1,12 @@
+bt_executor:
+  ros__parameters:
+    action_name: bt_execution
+    tick_frequency: 50
+    plugins:
+      - tf_listen_bt/lib
+      - pose_est_bt/lib
+      - camera_stag_bt/lib
+      - yolo_spearhead_bt/lib
+      - move_to_position_bt/lib
+    behavior_trees:
+      - r2_decision/behavior_trees/function_test_tree.xml

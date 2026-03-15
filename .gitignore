@@ -1,0 +1,10 @@
+build/
+bin/
+lib/
+install/
+Groot/
+README.md
+.vscode/
+*.log
+*.tmp
+tree.xml

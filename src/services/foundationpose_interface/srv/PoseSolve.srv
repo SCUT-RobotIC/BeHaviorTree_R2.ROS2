@@ -1,0 +1,7 @@
+bool need
+---
+float64[] theta_sum1
+float64[] theta_sum2
+float64[] theta_sum3
+float64[] theta_sum_yaw
+bool success
