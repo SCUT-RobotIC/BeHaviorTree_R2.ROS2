@@ -1,0 +1,61 @@
+from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import LaunchConfiguration
+from launch_ros.actions import Node
+
+
+def generate_launch_description():
+    return LaunchDescription([
+        DeclareLaunchArgument('target_ply_path', default_value=''),
+        DeclareLaunchArgument('source_map_topic', default_value='/glim_ros/map'),
+        DeclareLaunchArgument('source_map_qos', default_value='auto'),
+        DeclareLaunchArgument('source_pose_topic', default_value='/glim_ros/pose_corrected'),
+        DeclareLaunchArgument('target_frame_id', default_value='target_map'),
+        DeclareLaunchArgument('output_pose_topic', default_value='/glim2small_gicp/robot_pose'),
+        DeclareLaunchArgument('output_position_topic', default_value='/glim2small_gicp/robot_position'),
+        DeclareLaunchArgument('output_alignment_topic', default_value='/glim2small_gicp/source_map_pose'),
+        DeclareLaunchArgument('output_relocalized_pose_topic', default_value='/glim2small_gicp/relocalized_robot_pose'),
+        DeclareLaunchArgument('output_relocalized_position_topic', default_value='/glim2small_gicp/relocalized_robot_position'),
+        DeclareLaunchArgument('num_threads', default_value='4'),
+        DeclareLaunchArgument('num_neighbors', default_value='20'),
+        DeclareLaunchArgument('min_source_points', default_value='500'),
+        DeclareLaunchArgument('downsampling_resolution', default_value='0.25'),
+        DeclareLaunchArgument('max_correspondence_distance', default_value='2.0'),
+        DeclareLaunchArgument('verbose_topic_log', default_value='true'),
+        DeclareLaunchArgument('initial_guess_x', default_value='0.0'),
+        DeclareLaunchArgument('initial_guess_y', default_value='0.0'),
+        DeclareLaunchArgument('initial_guess_z', default_value='0.0'),
+        DeclareLaunchArgument('initial_guess_roll', default_value='0.0'),
+        DeclareLaunchArgument('initial_guess_pitch', default_value='0.0'),
+        DeclareLaunchArgument('initial_guess_yaw', default_value='0.0'),
+        Node(
+            package='glim2small_gicp',
+            executable='glim2small_gicp_node',
+            name='glim2small_gicp_node',
+            output='screen',
+            parameters=[{
+                'target_ply_path': LaunchConfiguration('target_ply_path'),
+                'source_map_topic': LaunchConfiguration('source_map_topic'),
+                'source_map_qos': LaunchConfiguration('source_map_qos'),
+                'source_pose_topic': LaunchConfiguration('source_pose_topic'),
+                'target_frame_id': LaunchConfiguration('target_frame_id'),
+                'output_pose_topic': LaunchConfiguration('output_pose_topic'),
+                'output_position_topic': LaunchConfiguration('output_position_topic'),
+                'output_alignment_topic': LaunchConfiguration('output_alignment_topic'),
+                'output_relocalized_pose_topic': LaunchConfiguration('output_relocalized_pose_topic'),
+                'output_relocalized_position_topic': LaunchConfiguration('output_relocalized_position_topic'),
+                'num_threads': LaunchConfiguration('num_threads'),
+                'num_neighbors': LaunchConfiguration('num_neighbors'),
+                'min_source_points': LaunchConfiguration('min_source_points'),
+                'downsampling_resolution': LaunchConfiguration('downsampling_resolution'),
+                'max_correspondence_distance': LaunchConfiguration('max_correspondence_distance'),
+                'verbose_topic_log': LaunchConfiguration('verbose_topic_log'),
+                'initial_guess_x': LaunchConfiguration('initial_guess_x'),
+                'initial_guess_y': LaunchConfiguration('initial_guess_y'),
+                'initial_guess_z': LaunchConfiguration('initial_guess_z'),
+                'initial_guess_roll': LaunchConfiguration('initial_guess_roll'),
+                'initial_guess_pitch': LaunchConfiguration('initial_guess_pitch'),
+                'initial_guess_yaw': LaunchConfiguration('initial_guess_yaw'),
+            }],
+        ),
+    ])

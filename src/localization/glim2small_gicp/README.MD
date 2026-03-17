@@ -1,0 +1,1 @@
+ros2 launch glim2small_gicp glim2small_gicp.launch.py   target_ply_path:=/home/haji7840/gicptest_ws/ROS_BAG/PLY/3.11.ply   source_map_topic:=/glim_ros/map   source_pose_topic:=/glim_ros/pose_corrected   max_correspondence_distance:=8.0   verbose_topic_log:=true

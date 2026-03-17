@@ -1,0 +1,13 @@
+auto_tracker_node:
+  ros__parameters:
+    # 10: DEBUG, 20: INFO, 30: WARN, 40: ERROR
+    # 代码中尝试读取整型值 (integer_value)，建议配置为整数
+    debug_level: 10
+    
+    # 模型和配置文件路径
+    yolo_model_path: "pose_est/config/best.pt"
+    mesh_path: "/home/gzic-robotic/rc2026_ros2_ws/src/perception/pose_est/config/KFS.obj"
+    sam_checkpoint: "/home/gzic-robotic/rc2026_ros2_ws/src/perception/pose_est/config/sam_vit_b_01ec64.pth"
+    
+    # 检测阈值
+    threshold: 0.5

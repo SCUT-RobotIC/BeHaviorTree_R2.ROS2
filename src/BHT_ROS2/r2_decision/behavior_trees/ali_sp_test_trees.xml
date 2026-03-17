@@ -1,0 +1,9 @@
+<root>
+    <BehaviorTree ID="MainTree">
+        <Sequence>
+            <MoveToPosition, target_position = "Position2"/>
+            <TfListen, Position1 = "Position2", timeout = 10/>
+            <AliSp, need = True/>
+        </Sequence>
+    </BehaviorTree>
+</root>
