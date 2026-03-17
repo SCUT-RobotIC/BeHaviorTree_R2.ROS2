@@ -1,0 +1,19 @@
+stm32_control_node:
+  ros__parameters:
+    frequency: 50.0
+    odom_name: odom
+    base_link_name: lidar
+    use_pose_topic_for_current_pose: true
+    current_pose_topic_name: /glim_ros/pose_corrected
+    goal_pose_topic_name: /target
+    stag_center_topic_name: /stag_center
+    stag_detected_topic_name: /stag_detected
+    arm_angles_topic_name: /arm_angles
+    use_pose_est_service_for_arm_angles: true
+    pose_est_service_name: solve_pose
+    pose_est_request_interval_sec: 0.5
+    yolo_offsets_topic_name: /yolo_detection_offsets
+    stm32_read_topic: stm32/read
+    stm32_write_topic: stm32/write
+    # flow_name: grab_tip
+    flow_name: stag_insert
