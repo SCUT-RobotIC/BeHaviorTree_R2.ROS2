@@ -1,20 +1,27 @@
-#include<rclcpp/rclcpp.hpp>
-#include<geometry_msgs/msg/pose_stamped.hpp>
-#include "movetp_interface/srv/MoveToPosition.hpp"
+#pragma once
 
-using MoveToPosition = movetp_interface::srv::MoveToPosition;
+#include <memory>
+
+#include "geometry_msgs/msg/pose.hpp"
+#include "movetp_interface/srv/move_to_position.hpp"
+#include "rclcpp/rclcpp.hpp"
 
 namespace move_to_position
 {
 
+using MoveToPosition = movetp_interface::srv::MoveToPosition;
+
 class MoveToPositionNode : public rclcpp::Node
 {
-    public:
-        explicit MoveToPositionNode(const rclcpp::NodeOptions& options);
-    private:
-        std::shared_ptr<rclcpp::Node> node_;
-        rclcpp::Publisher<geometry_msgs::msg::posestamped>::SharedPtr target_pos;
-        rclcpp::Service<MoveToPosition>::SharedPtr move_to_position_service;
-        void handle_service(const std::shared_ptr<MoveToPosition::Request> request, std::shared_ptr<MoveToPosition::Response> response);
-}
-}
+public:
+    MoveToPositionNode();
+
+private:
+    void handleService(const std::shared_ptr<MoveToPosition::Request> request,
+                                         std::shared_ptr<MoveToPosition::Response> response);
+
+    rclcpp::Publisher<geometry_msgs::msg::Pose>::SharedPtr target_pos_pub_;
+    rclcpp::Service<MoveToPosition>::SharedPtr move_to_position_service_;
+};
+
+}  // namespace move_to_position

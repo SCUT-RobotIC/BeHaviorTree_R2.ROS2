@@ -24,7 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'yolo_spearhead_see = yolo_spearhead_see.yolo_spearhead_see:main'
+            'yolo_spearhead_see_node = yolo_spearhead_see.yolo_spearhead_see_node:main'
         ],
     },
 )

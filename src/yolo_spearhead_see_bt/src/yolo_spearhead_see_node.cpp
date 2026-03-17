@@ -5,28 +5,28 @@ namespace yolo_spearhead_see_bt
 
 bool YoloNode::setGoal(Goal& goal)
 {
-  auto target = getInput<std::string>("target");
-  if(!target)
+  auto need = getInput<bool>("need");
+  if(!need)
   {
     return false;
   }
 
-  goal.target = target.value();
+  goal.need = need.value();
   return true;
 }
 
 BT::PortsList YoloNode::providedPorts()
 {
   return providedBasicPorts({
-    BT::InputPort<std::string>("need"),
-    BT::OutputPort<bool>("detected")
+    BT::InputPort<bool>("need", true, "Whether to run YOLO detection"),
+    BT::OutputPort<bool>("success")
   });
 }
 
 BT::NodeStatus YoloNode::onResultReceived(const WrappedResult& result)
 {
-  setOutput("detected", result.result->detected);
-  return result.result->detected ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
+  setOutput("success", result.result->success);
+  return result.result->success ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 
 }  // namespace yolo_spearhead_see_bt

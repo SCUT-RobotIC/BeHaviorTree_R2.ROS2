@@ -3,6 +3,7 @@
 import rclpy
 from rclpy.node import Node
 import threading
+import os
 from sensor_msgs.msg import Image
 from std_msgs.msg import Float32MultiArray, Int16
 import cv2
@@ -13,25 +14,33 @@ from rclpy.executors import MultiThreadedExecutor
 from rclpy.action import ActionServer, CancelResponse, GoalResponse
 from rclpy.callback_groups import ReentrantCallbackGroup
 import rclpy.action
-from fetchsp_interfaces.action import FetchSp
+from fetchsp_interface.action import FetchSp
+from ament_index_python.packages import get_package_share_directory
 
 class YOLOSpearheadSeeNode(Node):
     def __init__(self):
-        super().__init__('yolo_spearhead_see')
+        super().__init__('yolo_spearhead_see_node')
+        package_share = get_package_share_directory('yolo_spearhead_see')
+        default_model_path = os.path.join(
+            package_share, 'models', 'blackwhite_totalspearhead_yolov8s.pt'
+        )
+
         self.declare_parameter('debug_level', 0)  # 调试级别参数，默认为0（无调试输出）
         self.declare_parameter('error', 20.0)  # 偏差误差范围，单位为像素
         self.declare_parameter('threshold', 0.8)  # 置信度阈值
         self.declare_parameter('window_size',5)
         self.declare_parameter('max_miss_frames',1)
+        self.declare_parameter('yolo_model_path', default_model_path)
         
         self.error = self.get_parameter('error').get_parameter_value().double_value  # 获取偏差误差范围
         self.threshold = self.get_parameter('threshold').get_parameter_value().double_value  # 获取置信度阈值
         self.debug_level = self.get_parameter('debug_level').get_parameter_value().integer_value  # 获取调试级别参数值
         self.window_size = self.get_parameter('window_size').get_parameter_value().integer_value  # 获取窗口大小参数值
         self.max_miss_frames = self.get_parameter('max_miss_frames').get_parameter_value().integer_value  # 获取最大丢失帧数参数值
+        self.yolo_model_path = self.get_parameter('yolo_model_path').get_parameter_value().string_value
 
         # 加载YOLO模型
-        self.model = YOLO('src/perception/yolo_spearhead_see/models/blackwhite_totalspearhead_yolov8s.pt')
+        self.model = YOLO(self.yolo_model_path)
         
         # 初始化CV桥接器
         self.bridge = CvBridge()

@@ -5,6 +5,7 @@
 
  #include "behaviortree_cpp/action_node.h"
  #include "behaviortree_ros2/ros_node_params.hpp"
+ #include "geometry_msgs/msg/pose.hpp"
  #include "geometry_msgs/msg/transform_stamped.hpp"
  #include "tf2_ros/buffer.h"
  #include "tf2_ros/transform_listener.h"
@@ -26,7 +27,7 @@
 	 std::shared_ptr<rclcpp::Node> node_;
 	 std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 	 std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-	 std::double error = 0.1; // 可调整的误差范围
+	 double error = 0.2;  // Allowed XY position error
  };
 
  }  // namespace tf_listen_bt

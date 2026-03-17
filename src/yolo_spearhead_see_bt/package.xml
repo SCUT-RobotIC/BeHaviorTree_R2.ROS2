@@ -11,7 +11,7 @@
 
   <depend>rclcpp</depend>
   <depend>behaviortree_ros2</depend>
-  <depend>yolo_spearhead_see</depend>
+  <depend>fetchsp_interface</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

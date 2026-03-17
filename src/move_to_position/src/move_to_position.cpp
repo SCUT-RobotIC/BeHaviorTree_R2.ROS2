@@ -2,31 +2,39 @@
 
 namespace move_to_position
 {
-    MoveToPositionNode::MoveToPositionNode() : Node("move_to_position_node")
-    {
-        // 发布目标位置
-        target_pos_pub = this->create_publisher<geometry_msgs::msg::Pose>("target_position", 10);
-        
-        // 创建服务
-        move_to_position_service = this->create_service<MoveToPosition>(
-            "move_to_position",
-            std::bind(&MoveToPositionNode::handle_service, this, std::placeholders::_1, std::placeholders::_2)
-        );
 
-        RCLCPP_INFO(this->get_logger(), "MoveToPositionNode has been started.");
+MoveToPositionNode::MoveToPositionNode() : Node("move_to_position_node")
+{
+    target_pos_pub_ = this->create_publisher<geometry_msgs::msg::Pose>("target_position", 10);
 
-        void handle_service(const std::shared_ptr<MoveToPosition::Request> request, std::shared_ptr<MoveToPosition::Response> response)
-        {
-            RCLCPP_INFO(this->get_logger(), "Received request to move to position: [%.2f, %.2f, %.2f]", 
-                        request->target_position.position.x, 
-                        request->target_position.position.y, 
-                        request->target_position.position.z);
+    move_to_position_service_ = this->create_service<MoveToPosition>(
+        "move_to_position",
+        std::bind(&MoveToPositionNode::handleService, this, std::placeholders::_1, std::placeholders::_2));
 
-            // 发布目标位置
-            target_pos_pub->publish(request->target_position);
+    RCLCPP_INFO(this->get_logger(), "MoveToPositionNode has been started.");
+}
 
-            // 设置响应
-            response->success = true;
-        }
-    }
+void MoveToPositionNode::handleService(
+    const std::shared_ptr<MoveToPosition::Request> request,
+    std::shared_ptr<MoveToPosition::Response> response)
+{
+    RCLCPP_INFO(
+        this->get_logger(),
+        "Received move request: [%.3f, %.3f, %.3f]",
+        request->target_position.position.x,
+        request->target_position.position.y,
+        request->target_position.position.z);
+
+    target_pos_pub_->publish(request->target_position);
+    response->success = true;
+}
+
+}  // namespace move_to_position
+
+int main(int argc, char ** argv)
+{
+    rclcpp::init(argc, argv);
+    rclcpp::spin(std::make_shared<move_to_position::MoveToPositionNode>());
+    rclcpp::shutdown();
+    return 0;
 }

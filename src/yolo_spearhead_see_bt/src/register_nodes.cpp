@@ -3,5 +3,5 @@
 
 BT_REGISTER_ROS_NODES(factory, params)
 {
-  factory.registerNodeType<yolo_spearhead_see_bt::YOLOSpearheadSeeNode>("FetchSp", params);
+  factory.registerNodeType<yolo_spearhead_see_bt::YoloNode>("FetchSp", params);
 }
