@@ -10,8 +10,8 @@
 from .Utils import *
 from .datareader import *
 import itertools
-from learning.training.predict_score import *
-from learning.training.predict_pose_refine import *
+from perception.pose_est.learning.training.predict_score import *
+from perception.pose_est.learning.training.predict_pose_refine import *
 import yaml
 
 

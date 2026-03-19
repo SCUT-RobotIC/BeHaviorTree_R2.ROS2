@@ -48,7 +48,7 @@ try:
 except:
   mycpp = None
 try:
-  from bundlesdf.mycuda import common
+  from perception.pose_est.bundlesdf.mycuda import common
 except:
   common = None
 try:

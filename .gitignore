@@ -8,3 +8,4 @@ README.md
 *.log
 *.tmp
 tree.xml
+/home/ls/Desktop/sec_dec/src/perception/pose_est/

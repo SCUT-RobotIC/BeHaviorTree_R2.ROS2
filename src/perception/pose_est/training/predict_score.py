@@ -17,11 +17,11 @@ from omegaconf import OmegaConf
 from tqdm import tqdm
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{code_dir}/../../../')
-from learning.datasets.h5_dataset import *
-from learning.models.score_network import *
-from learning.datasets.pose_dataset import *
-from pose_est.Utils import *
-from pose_est.datareader import *
+from perception.pose_est.learning.datasets.h5_dataset import *
+from perception.pose_est.learning.models.score_network import *
+from perception.pose_est.learning.datasets.pose_dataset import *
+from perception.pose_est.pose_est.Utils import *
+from perception.pose_est.pose_est.datareader import *
 
 
 def vis_batch_data_scores(pose_data, ids, scores, pad_margin=5):

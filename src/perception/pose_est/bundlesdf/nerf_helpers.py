@@ -201,7 +201,7 @@ def get_embedder(multires, cfg, i=0, octree_m=None):
         embed = Embedder(**embed_kwargs)
         out_dim = embed.out_dim
     elif i==1:
-        from mycuda.torch_ngp_grid_encoder.grid import GridEncoder
+        from perception.pose_est.bundlesdf.mycuda.torch_ngp_grid_encoder.grid import GridEncoder
         embed = GridEncoder(input_dim=3, n_levels=cfg['num_levels'], log2_hashmap_size=cfg['log2_hashmap_size'], desired_resolution=cfg['finest_res'], base_resolution=cfg['base_res'], level_dim=cfg['feature_grid_dim'])
         print(embed)
         out_dim = embed.out_dim
