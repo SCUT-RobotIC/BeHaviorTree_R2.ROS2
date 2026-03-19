@@ -3,5 +3,7 @@
 
 BT_REGISTER_ROS_NODES(factory, params)
 {
-  factory.registerNodeType<move_to_position_bt::MoveToPositionNode>("MoveToPosition", params);
+  BT::RosNodeParams fixed_params = params;
+  fixed_params.default_port_value = "MoveToPosition_Service";
+  factory.registerNodeType<move_to_position_bt::MoveToPositionNode>("MoveToPosition", fixed_params);
 }

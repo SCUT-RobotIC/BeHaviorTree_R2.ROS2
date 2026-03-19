@@ -24,7 +24,7 @@ TfListenNode::TfListenNode(const std::string& name, const BT::NodeConfig& config
 BT::PortsList TfListenNode::providedPorts()
 {
 	return {
-		BT::InputPort<geometry_msgs::msg::Pose>("Position1"),
+		BT::InputPort<geometry_msgs::msg::Pose>("Target_Position"),
 		BT::InputPort<std::string>("target_frame", "lidar_link", "TF target frame"),
 		BT::InputPort<std::string>("source_frame", "lidar_odom", "TF source frame"),
 		BT::InputPort<double>("timeout", 0.0, "Lookup timeout seconds"),
@@ -33,7 +33,7 @@ BT::PortsList TfListenNode::providedPorts()
 
 BT::NodeStatus TfListenNode::tick()
 {
-	auto target_pose = getInput<geometry_msgs::msg::Pose>("Position1");
+	auto target_pose = getInput<geometry_msgs::msg::Pose>("Target_Position");
 	if(!target_pose)
 	{
 		return BT::NodeStatus::FAILURE;
@@ -72,17 +72,15 @@ BT::NodeStatus TfListenNode::tick()
 				target_frame.value(), source_frame.value(), tf2::TimePointZero);
 		}
 
-		geometry_msgs::msg::Pose output_pose;
-		output_pose.position.x = transform.transform.translation.x;
-		output_pose.position.y = transform.transform.translation.y;
-		output_pose.position.z = transform.transform.translation.z;
-		output_pose.orientation = transform.transform.rotation;
-
-		setOutput("Position2", output_pose);
+		geometry_msgs::msg::Pose Position_Now;
+		Position_Now.position.x = transform.transform.translation.x;
+		Position_Now.position.y = transform.transform.translation.y;
+		Position_Now.position.z = transform.transform.translation.z;
+		Position_Now.orientation = transform.transform.rotation;
 
 		const bool within_xy_error =
-			std::abs(output_pose.position.x - target_pose.value().position.x) <= error &&
-			std::abs(output_pose.position.y - target_pose.value().position.y) <= error;
+			std::abs(Position_Now.position.x - target_pose.value().position.x) <= error &&
+			std::abs(Position_Now.position.y - target_pose.value().position.y) <= error;
 
 		return within_xy_error ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 	}

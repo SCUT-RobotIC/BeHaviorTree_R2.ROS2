@@ -11,16 +11,13 @@ void Stm32ControlNode::load_parameters() {
     stair_direction_topic_ = this->declare_parameter<std::string>("stair_direction_topic_name", "/stair_direction");
     arm_angles_topic_ = this->declare_parameter<std::string>("arm_angles_topic_name", "/arm_angles");
     yolo_offsets_topic_ = this->declare_parameter<std::string>("yolo_offsets_topic_name", "/yolo_detection_offsets");
+    action_code_topic_ = this->declare_parameter<std::string>("action_code_topic_name", "/stm32/action_code");
     stm32_read_topic_ = this->declare_parameter<std::string>("stm32_read_topic", "stm32/read");
     stm32_write_topic_ = this->declare_parameter<std::string>("stm32_write_topic", "stm32/write");
+    publish_ack_flag_ = this->declare_parameter<bool>("publish_ack_flag", false);
+    ack_flag_topic_ = this->declare_parameter<std::string>("ack_flag_topic_name", "/stm32/ack_flag");
     use_pose_topic_for_current_pose_ = this->declare_parameter<bool>("use_pose_topic_for_current_pose", false);
     current_pose_topic_ = this->declare_parameter<std::string>("current_pose_topic_name", "/glim_ros/pose_corrected");
-    use_pose_est_service_for_arm_angles_ = this->declare_parameter<bool>("use_pose_est_service_for_arm_angles", false);
-    pose_est_service_name_ = this->declare_parameter<std::string>("pose_est_service_name", "solve_pose");
-    pose_est_request_interval_sec_ = this->declare_parameter<double>("pose_est_request_interval_sec", 0.5);
-
-    // parameter selecting which flow to run
-    flow_name_ = this->declare_parameter<std::string>("flow_name", "grab_tip");
 }
 
 int16_t Stm32ControlNode::clamp_to_i16(double value) {
@@ -32,10 +29,27 @@ int16_t Stm32ControlNode::clamp_to_i16(double value) {
 void Stm32ControlNode::setup_ros_communications() {
     // Target Subs
     auto target_qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
+
+    action_code_sub_ = this->create_subscription<std_msgs::msg::Int16>(
+        action_code_topic_, target_qos,
+        [this](const std_msgs::msg::Int16::SharedPtr msg) {
+            latest_action_code_.store(msg->data, std::memory_order_relaxed);
+            action_code_updated_.store(true, std::memory_order_release);
+        }
+    );
+
+    if (publish_ack_flag_) {
+        ack_flag_pub_ = this->create_publisher<std_msgs::msg::Int16>(ack_flag_topic_, 10);
+        RCLCPP_INFO(this->get_logger(), "ACK flag publish enabled on topic '%s'", ack_flag_topic_.c_str());
+    }
+
     target_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
         goal_pose_topic_, target_qos,
         [this](const geometry_msgs::msg::Point::SharedPtr msg) {
-            this->action_handler_->set_target_position(msg->x, msg->y);
+            std::lock_guard<std::mutex> lock(target_mutex_);
+            this->target_data_.x_target = clamp_to_i16(std::round(msg->x * 1000.0));
+            this->target_data_.y_target = clamp_to_i16(std::round(msg->y * 1000.0));
+            this->target_data_.last_update_time = this->now();
             RCLCPP_INFO(this->get_logger(), "Received target: (%.2f, %.2f)", msg->x, msg->y);
         }
     );
@@ -44,7 +58,9 @@ void Stm32ControlNode::setup_ros_communications() {
         target_heading_topic_, 10,
         [this](const std_msgs::msg::Int16::SharedPtr msg) {
             const int16_t heading = std::clamp<int16_t>(msg->data, 0, 3);
-            this->action_handler_->set_target_heading(heading);
+            std::lock_guard<std::mutex> lock(target_mutex_);
+            this->target_data_.heading = heading;
+            this->target_data_.last_update_time = this->now();
         }
     );
 
@@ -52,7 +68,9 @@ void Stm32ControlNode::setup_ros_communications() {
         stair_direction_topic_, 10,
         [this](const std_msgs::msg::Int16::SharedPtr msg) {
             const int16_t direction = std::clamp<int16_t>(msg->data, 0, 1);
-            this->action_handler_->set_stair_direction(direction);
+            std::lock_guard<std::mutex> lock(target_mutex_);
+            this->target_data_.stair_direction = direction;
+            this->target_data_.last_update_time = this->now();
         }
     );
 
@@ -75,26 +93,21 @@ void Stm32ControlNode::setup_ros_communications() {
         }
     );
 
-    // Arm
-    if (use_pose_est_service_for_arm_angles_) {
-        pose_solve_client_ = this->create_client<PoseSolve>(pose_est_service_name_);
-        RCLCPP_INFO(this->get_logger(), "Arm angle source: PoseSolve service '%s'", pose_est_service_name_.c_str());
-    } else {
-        arm_angles_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
-            arm_angles_topic_, 10,
-            [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
-                std::lock_guard<std::mutex> lock(arm_mutex_);
-                if (msg->data.size() >= 4) {
-                    this->arm_data_.joint1 = static_cast<int16_t>(std::round(msg->data[0] * 10.0));
-                    this->arm_data_.joint2 = static_cast<int16_t>(std::round(msg->data[1] * 10.0));
-                    this->arm_data_.joint3 = static_cast<int16_t>(std::round(msg->data[2] * 10.0));
-                    this->arm_data_.yaw = static_cast<int16_t>(std::round(msg->data[3] * 10.0));
-                    this->arm_data_.last_update_time = this->now();
-                }
+    // Arm data comes from topic only.
+    arm_angles_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
+        arm_angles_topic_, 10,
+        [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
+            std::lock_guard<std::mutex> lock(arm_mutex_);
+            if (msg->data.size() >= 4) {
+                this->arm_data_.joint1 = static_cast<int16_t>(std::round(msg->data[0] * 10.0));
+                this->arm_data_.joint2 = static_cast<int16_t>(std::round(msg->data[1] * 10.0));
+                this->arm_data_.joint3 = static_cast<int16_t>(std::round(msg->data[2] * 10.0));
+                this->arm_data_.yaw = static_cast<int16_t>(std::round(msg->data[3] * 10.0));
+                this->arm_data_.last_update_time = this->now();
             }
-        );
-        RCLCPP_INFO(this->get_logger(), "Arm angle source: topic '%s'", arm_angles_topic_.c_str());
-    }
+        }
+    );
+    RCLCPP_INFO(this->get_logger(), "Arm angle source: topic '%s'", arm_angles_topic_.c_str());
 
     // YOLO
     yolo_offsets_sub_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
@@ -113,7 +126,10 @@ void Stm32ControlNode::setup_ros_communications() {
         current_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             current_pose_topic_, 10,
             [this](const geometry_msgs::msg::PoseStamped::SharedPtr msg) {
-                this->action_handler_->update_current_pose(*msg);
+                std::lock_guard<std::mutex> lock(pose_mutex_);
+                this->pose_data_.x_real = clamp_to_i16(std::round(msg->pose.position.x * 1000.0));
+                this->pose_data_.y_real = clamp_to_i16(std::round(msg->pose.position.y * 1000.0));
+                this->pose_data_.last_update_time = this->now();
             }
         );
         RCLCPP_INFO(this->get_logger(), "Current pose source: topic '%s'", current_pose_topic_.c_str());

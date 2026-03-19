@@ -3,5 +3,7 @@
 
 BT_REGISTER_ROS_NODES(factory, params)
 {
-  factory.registerNodeType<yolo_spearhead_see_bt::YoloNode>("FetchSp", params);
+  BT::RosNodeParams fixed_params = params;
+  fixed_params.default_port_value = "FetchSp_Action";
+  factory.registerNodeType<yolo_spearhead_see_bt::YoloNode>("FetchSp", fixed_params);
 }

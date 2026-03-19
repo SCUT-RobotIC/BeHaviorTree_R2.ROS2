@@ -14,7 +14,6 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
-find_package(foundationpose_interface REQUIRED)
 
 include_directories(include)
 
@@ -22,9 +21,6 @@ add_executable(stm32_control_node
   src/stm32_control_node.cpp
   src/stm32_control_node_params.cpp
   src/stm32_control_node_runtime.cpp
-  src/action_handler.cpp
-  src/flow_registry.cpp
-  src/flows.cpp
 )
 
 target_include_directories(stm32_control_node PUBLIC
@@ -40,7 +36,6 @@ ament_target_dependencies(stm32_control_node
   tf2_geometry_msgs
   nav2_msgs
   sensor_msgs
-  foundationpose_interface
 )
 
 install(TARGETS stm32_control_node

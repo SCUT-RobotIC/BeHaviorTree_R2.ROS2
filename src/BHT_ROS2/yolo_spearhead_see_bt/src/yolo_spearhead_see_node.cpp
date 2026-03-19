@@ -5,27 +5,26 @@ namespace yolo_spearhead_see_bt
 
 bool YoloNode::setGoal(Goal& goal)
 {
-  auto need = getInput<bool>("need");
-  if(!need)
-  {
-    return false;
-  }
-
-  goal.need = need.value();
+  goal.need = true;
   return true;
 }
 
 BT::PortsList YoloNode::providedPorts()
 {
+  BT::OutputPort<geometry_msgs::msg::Pose>("Align_Position", "The position to align with the target"),
   return providedBasicPorts({
-    BT::InputPort<bool>("need", true, "Whether to run YOLO detection"),
-    BT::OutputPort<bool>("success")
-  });
+  }); 
 }
 
 BT::NodeStatus YoloNode::onResultReceived(const WrappedResult& result)
 {
-  setOutput("success", result.result->success);
+  geometry_msgs::msg::Pose target_position;
+  target_position.position.x = 10;  
+  target_position.position.y = 20;
+  target_position.position.z = 30;
+
+  setOutput("Align_Position", target_position);
+  
   return result.result->success ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 

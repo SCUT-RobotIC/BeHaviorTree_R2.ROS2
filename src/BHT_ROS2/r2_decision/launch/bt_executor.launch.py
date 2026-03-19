@@ -1,9 +1,7 @@
 from pathlib import Path
-
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
-from launch.conditions import IfCondition
 from launch.conditions import LaunchConfigurationEquals
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -13,9 +11,7 @@ from launch.launch_description_sources import PythonLaunchDescriptionSource
 
 def generate_launch_description():
     pkg_share = Path(get_package_share_directory("r2_decision"))
-    default_params = str(pkg_share / "config" / "bt_executor.yaml")
-    params_arg = LaunchConfiguration("params")
-    localization_arg = LaunchConfiguration("localization")
+    executor_params = str(pkg_share / "config" / "bt_executor.yaml")
     glim_config = os.path.join(
         get_package_share_directory("glim"),
         "config"
@@ -24,7 +20,7 @@ def generate_launch_description():
     return LaunchDescription([
         DeclareLaunchArgument(
             "params",
-            default_value=default_params,
+            default_value=executor_params,
             description="Path to BT executor parameter YAML"
         ),
         DeclareLaunchArgument(
@@ -38,6 +34,12 @@ def generate_launch_description():
             package="stm32_comm",
             executable="stm32_comm_node",
             name="stm32_comm",
+            output="screen"
+        ),
+        Node(
+            package="stm32_control",
+            executable="stm32_control_node",
+            name="stm32_control",
             output="screen"
         ),
         # PointLIO定位节点

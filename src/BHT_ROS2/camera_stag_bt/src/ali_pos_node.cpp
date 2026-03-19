@@ -5,27 +5,24 @@ namespace camera_stag_bt
 
 bool AliPsNode::setGoal(Goal& goal)
 {
-  auto need = getInput<bool>("need");
-  if(!need)
-  {
-    return false;
-  }
-
-  goal.need = need.value();
+  goal.need = true;
   return true;
 }
 
 BT::PortsList AliPsNode::providedPorts()
   {
+    BT::OutputPort<geometry_msgs::msg::Pose>("Position3"),
     return providedBasicPorts({
-      BT::InputPort<bool>("need", true, "Whether to run pose solve"),
-      BT::OutputPort<bool>("success")
     });
   }
 
 BT::NodeStatus AliPsNode::onResultReceived(const WrappedResult& result)
 {
-  setOutput("success", result.result->success);
+  geometry_msgs::msg::Pose Position3;
+  Position3.position.x = 10;
+  Position3.position.y = 20;
+  Position3.position.z = 30;
+  setOutput("Position3", Position3);
   return result.result->success ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 }
 

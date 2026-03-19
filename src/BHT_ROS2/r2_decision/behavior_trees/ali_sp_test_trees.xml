@@ -1,9 +1,11 @@
 <root>
     <BehaviorTree ID="MainTree">
         <Sequence>
-            <MoveToPosition, target_position = "Position2"/>
-            <TfListen, Position1 = "Position2", timeout = 10/>
-            <AliSp, need = True/>
+            <RetryUntilSuccessful num_attempts="-1">
+                <MoveToPosition, target_position = {Align_Position}/>
+                <TfListen, Position1 = {Align_Position}, timeout = 10/>
+                <AliSp, need = Align_Position = {Align_Position}, Position3 = {Position3}/>
+            </RetryUntilSuccessful>
         </Sequence>
     </BehaviorTree>
 </root>

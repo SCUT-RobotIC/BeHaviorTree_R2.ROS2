@@ -58,7 +58,7 @@ BT::NodeStatus R2InitialNode::onRunning()
       static_cast<std::size_t>(received_count_.load()) >= expected_count_)
   {
     resetSubscriptions();
-    setOutput("Position1", output_pose_);
+    setOutput("Position_To_FetchSp", output_pose_);
     return BT::NodeStatus::SUCCESS;
   }
 
@@ -74,7 +74,7 @@ BT::NodeStatus R2InitialNode::onRunning()
     if (elapsed > std::chrono::duration<double>(timeout.value()))
     {
       resetSubscriptions();
-      setOutput("Position1", output_pose_);
+      setOutput("Position_to_fetchSp", output_pose_);
       return BT::NodeStatus::FAILURE;
     }
   }

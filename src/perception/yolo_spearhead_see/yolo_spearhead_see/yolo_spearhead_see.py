@@ -60,7 +60,7 @@ class YOLOSpearheadSeeNode(Node):
         self.FetchSp_Action_Server = rclpy.action.ActionServer(
             self,
             FetchSp,
-            'camera_stag_action',
+            'FetchSp_Action',
             execute_callback = self.execute_callback,
             goal_callback = self.goal_callback,
             cancel_callback = self.cancel_callback,
@@ -90,6 +90,13 @@ class YOLOSpearheadSeeNode(Node):
             '/yolo_detection_offsets', 
             10)
         
+        # 发布动作码
+        self.action_code_publisher = self.create_publisher(
+            int, 
+            'action_code', 
+            10
+        )
+
         # 发布标注后的图像
         self.annotated_image_publisher = self.create_publisher(
             Image,
@@ -117,6 +124,7 @@ class YOLOSpearheadSeeNode(Node):
 
     def execute_callback(self, goal_handle):    
         self.get_logger().info('执行相机检测任务...')
+        self.action_code_publisher.publish(2)  
         if self.cv_image is None:
             self.get_logger().warning('尚未接收到图像，无法执行检测')
             return FetchSp.Result(success=False)

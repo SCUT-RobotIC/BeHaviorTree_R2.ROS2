@@ -59,7 +59,7 @@ class CameraStagNode(Node):
             callback_group=self.sub_group
         )
 
-        # 订阅动作码
+        # 订阅ACK码
         self.ACK_sub = self.create_subscription(
             String, 
             'ACK',
@@ -68,11 +68,18 @@ class CameraStagNode(Node):
             callback_group=self.sub_group
         )
 
+        # 发布动作码
+        self.action_code_publisher = self.create_publisher(
+            int, 
+            'action_code', 
+            10
+        )
+
         # 创建动作服务器
         self.Ali_Action_Server = rclpy.action.ActionServer(
             self,
             AliSp,
-            'camera_stag_action',
+            'AliSp_Action',
             execute_callback = self.execute_callback,
             goal_callback = self.goal_callback,
             cancel_callback = self.cancel_callback,
@@ -234,7 +241,8 @@ class CameraStagNode(Node):
         self.get_logger().info('Received cancel request')
         return CancelResponse.ACCEPT    
     
-    def execute_callback(self, goal_handle):    
+    def execute_callback(self, goal_handle): 
+        self.action_code_publisher.publish(3)    
         self.get_logger().info('Executing goal...')
         result = AliSp.Result()
         self.capture_event.clear()

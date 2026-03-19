@@ -8,7 +8,7 @@ MoveToPositionNode::MoveToPositionNode() : Node("move_to_position_node")
     target_pos_pub_ = this->create_publisher<geometry_msgs::msg::Pose>("target_position", 10);
 
     move_to_position_service_ = this->create_service<MoveToPosition>(
-        "move_to_position",
+        "MoveToPosition_Service",
         std::bind(&MoveToPositionNode::handleService, this, std::placeholders::_1, std::placeholders::_2));
 
     RCLCPP_INFO(this->get_logger(), "MoveToPositionNode has been started.");

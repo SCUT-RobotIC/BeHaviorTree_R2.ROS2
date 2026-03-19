@@ -3,5 +3,7 @@
 
 BT_REGISTER_ROS_NODES(factory, params)
 {
-  factory.registerNodeType<camera_stag_bt::AliPsNode>("AliSp", params);
+    BT::RosNodeParams fixed_params = params;
+  fixed_params.default_port_value = "AliSp_Action";
+  factory.registerNodeType<yolo_spearhead_see_bt::YoloNode>("AliSp", fixed_params);
 }
