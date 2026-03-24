@@ -5,7 +5,7 @@ namespace move_to_position
 
 MoveToPositionNode::MoveToPositionNode() : Node("move_to_position_node")
 {
-    target_pos_pub_ = this->create_publisher<geometry_msgs::msg::Pose>("target_position", 10);
+    target_pos_pub_ = this->create_publisher<geometry_msgs::msg::Point>("target_position", 10);
 
     move_to_position_service_ = this->create_service<MoveToPosition>(
         "MoveToPosition_Service",
@@ -25,7 +25,11 @@ void MoveToPositionNode::handleService(
         request->target_position.position.y,
         request->target_position.position.z);
 
-    target_pos_pub_->publish(request->target_position);
+        geometry_msgs::msg::Point target_position;
+        target_position.x = request->target_position.position.x;
+        target_position.y = request->target_position.position.y;
+
+    target_pos_pub_->publish(target_position);
     response->success = true;
 }
 

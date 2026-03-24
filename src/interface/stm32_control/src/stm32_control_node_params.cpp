@@ -2,8 +2,8 @@
 
 void Stm32ControlNode::load_parameters() {
     frequency_ = this->declare_parameter<double>("frequency", 50.0);
-    odom_frame_ = this->declare_parameter<std::string>("odom_name", "odom");
-    base_frame_ = this->declare_parameter<std::string>("base_link_name", "base_link");
+    odom_frame_ = this->declare_parameter<std::string>("odom_name", "lidar_odom");
+    base_frame_ = this->declare_parameter<std::string>("base_link_name", "lidar_link");
     goal_pose_topic_ = this->declare_parameter<std::string>("goal_pose_topic_name", "/goal_pose");
     stag_center_topic_ = this->declare_parameter<std::string>("stag_center_topic_name", "/stag_center");
     stag_detected_topic_ = this->declare_parameter<std::string>("stag_detected_topic_name", "/stag_detected");

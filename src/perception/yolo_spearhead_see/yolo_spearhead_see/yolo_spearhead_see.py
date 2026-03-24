@@ -92,7 +92,7 @@ class YOLOSpearheadSeeNode(Node):
         
         # 发布动作码
         self.action_code_publisher = self.create_publisher(
-            int, 
+            Int16,
             'action_code', 
             10
         )
@@ -124,7 +124,9 @@ class YOLOSpearheadSeeNode(Node):
 
     def execute_callback(self, goal_handle):    
         self.get_logger().info('执行相机检测任务...')
-        self.action_code_publisher.publish(2)  
+        action_code_msg = Int16()
+        action_code_msg.data = 2
+        self.action_code_publisher.publish(action_code_msg)
         if self.cv_image is None:
             self.get_logger().warning('尚未接收到图像，无法执行检测')
             return FetchSp.Result(success=False)

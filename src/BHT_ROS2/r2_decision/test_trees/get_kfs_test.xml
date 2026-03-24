@@ -1,0 +1,20 @@
+<root>
+    <BehaviorTree ID="MainTree">
+        <Sequence>
+            <MoveToPosition, target_position = "Position3"/>
+            <TfListen, Position1 = "Position3", timeout = 10/>
+            <Fallback>
+                <Sequence>
+                    <KFSFetch, need = {need}/>
+                    <MoveToPosition, target_position = "Position2"/>
+                </Sequence>
+                <Sequence>
+                    <MoveToPosition, target_position = "Position1"/>
+                    <TfListen, Position1 = "Position1", timeout = 10/>
+                    <KFSFetch, need = {need}/>
+                    <MoveToPosition, target_position = "Position2"/>
+                </Sequence>
+            </Fallback>
+        </Sequence>
+    </BehaviorTree>
+</root>

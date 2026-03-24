@@ -70,7 +70,7 @@ class CameraStagNode(Node):
 
         # 发布动作码
         self.action_code_publisher = self.create_publisher(
-            int, 
+            Int32, 
             'action_code', 
             10
         )

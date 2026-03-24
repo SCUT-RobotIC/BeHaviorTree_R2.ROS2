@@ -5,10 +5,12 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
+
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(ali_interface REQUIRED)
+find_package(geometry_msgs REQUIRED)
 
 add_library(camera_stag_bt_nodes SHARED
   src/ali_pos_node.cpp
@@ -24,6 +26,7 @@ ament_target_dependencies(camera_stag_bt_nodes
   rclcpp
   behaviortree_ros2
   ali_interface
+  geometry_msgs
 )
 
 target_compile_definitions(camera_stag_bt_nodes PRIVATE BT_PLUGIN_EXPORT)

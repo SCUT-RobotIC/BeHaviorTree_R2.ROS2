@@ -5,7 +5,7 @@ auto_tracker_node:
     debug_level: 10
     
     # 模型和配置文件路径
-    yolo_model_path: "pose_est/config/best.pt"
+    yolomodel: "pose_est/config/best.pt"
     mesh_path: "/home/gzic-robotic/rc2026_ros2_ws/src/perception/pose_est/config/KFS.obj"
     sam_checkpoint: "/home/gzic-robotic/rc2026_ros2_ws/src/perception/pose_est/config/sam_vit_b_01ec64.pth"
     

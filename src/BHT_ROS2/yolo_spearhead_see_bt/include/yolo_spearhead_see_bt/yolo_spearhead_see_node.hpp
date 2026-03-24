@@ -5,6 +5,7 @@
 
 #include "behaviortree_ros2/bt_action_node.hpp"
 #include "fetchsp_interface/action/fetch_sp.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 
 namespace yolo_spearhead_see_bt
 {

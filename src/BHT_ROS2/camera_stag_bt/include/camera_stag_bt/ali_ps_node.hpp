@@ -5,6 +5,7 @@
 
 #include "behaviortree_ros2/bt_action_node.hpp"
 #include "ali_interface/action/ali_sp.hpp"
+#include "geometry_msgs/msg/pose.hpp"
 
 namespace camera_stag_bt
 {

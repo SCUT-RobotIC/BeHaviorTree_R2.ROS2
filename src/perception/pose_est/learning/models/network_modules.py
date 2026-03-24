@@ -17,7 +17,7 @@ import torch.nn as nn
 import time
 import cv2
 sys.path.append(f'{dir_path}/../../../../')
-from perception.pose_est.pose_est.Utils import *
+from pose_est.Utils import *
 
 
 

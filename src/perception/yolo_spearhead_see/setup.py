@@ -10,6 +10,7 @@ setup(
         ('share/ament_index/resource_index/packages',
             ['resource/' + package_name]),
         ('share/' + package_name, ['package.xml']),
+        ('share/' + package_name + '/models', ['models/blackwhite_totalspearhead_yolov8s.pt']),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,7 +25,8 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'yolo_spearhead_see_node = yolo_spearhead_see.yolo_spearhead_see_node:main'
+            'yolo_spearhead_see_node = yolo_spearhead_see.yolo_spearhead_see:main'
         ],
     },
 )
+

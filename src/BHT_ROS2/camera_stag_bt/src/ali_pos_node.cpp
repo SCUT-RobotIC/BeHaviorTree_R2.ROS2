@@ -11,8 +11,8 @@ bool AliPsNode::setGoal(Goal& goal)
 
 BT::PortsList AliPsNode::providedPorts()
   {
-    BT::OutputPort<geometry_msgs::msg::Pose>("Position3"),
     return providedBasicPorts({
+      BT::OutputPort<geometry_msgs::msg::Pose>("Position3")
     });
   }
 

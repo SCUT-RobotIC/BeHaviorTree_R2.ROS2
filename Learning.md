@@ -163,3 +163,9 @@ std::shared_ptr 的方法 .reset()
 | ------------ | ------------------------------------ |
 | `reset()`    | 释放 `shared_ptr` 管理的对象（引用计数-1，若为0则销毁） |
 | `reset(ptr)` | 接管新的原始指针                             |
+sudo chown -R $(whoami):$(whoami) /home/gzic-robotic/Documents/librealsense2
+sudo chown -R $(whoami):$(whoami) ~/r2_bht/BeHaviorTree_R2.ROS2/build
+sudo chown -R $(whoami):$(whoami) ~/r2_bht/BeHaviorTree_R2.ROS2/install
+# 只编译 src/目标文件夹/ 下的所有包
+colcon build --base-paths src/目标文件夹
+1715  ros2 action send_goal /bt_execution btcpp_ros2_interfaces/action/ExecuteTree "{target_tree: MainTree}"

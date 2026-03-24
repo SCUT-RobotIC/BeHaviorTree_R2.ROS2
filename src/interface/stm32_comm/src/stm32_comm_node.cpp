@@ -5,7 +5,7 @@
 class Stm32CommNode : public rclcpp::Node {
 public:
     Stm32CommNode() : Node("stm32_comm_node") {
-        this->declare_parameter<std::string>("serial_port", "/dev/ttyUSB0");
+        this->declare_parameter<std::string>("serial_port", "/dev/ttyACM0");
         this->declare_parameter<int>("baud_rate", 115200);
 
         std::string port = this->get_parameter("serial_port").as_string();

@@ -7,11 +7,11 @@
 # license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 
-from perception.pose_est.bundlesdf.nerf_runner import *
+from bundlesdf.nerf_runner import *
 code_dir = os.path.dirname(os.path.realpath(__file__))
 sys.path.append(f'{code_dir}/../')
 from datareader import *
-from perception.pose_est.bundlesdf.tool import *
+from bundlesdf.tool import *
 import yaml,argparse
 
 

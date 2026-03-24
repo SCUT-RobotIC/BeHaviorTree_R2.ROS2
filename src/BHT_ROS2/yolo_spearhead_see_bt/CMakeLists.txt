@@ -1,12 +1,16 @@
 cmake_minimum_required(VERSION 3.10)
 project(yolo_spearhead_see_bt)
 
+cmake_minimum_required(VERSION 3.10)
+project(yolo_spearhead_see_bt)
+
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
 endif()
 
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(geometry_msgs REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(fetchsp_interface REQUIRED)
 
@@ -22,6 +26,7 @@ target_include_directories(yolo_spearhead_see_nodes PUBLIC
 
 ament_target_dependencies(yolo_spearhead_see_nodes
   rclcpp
+  geometry_msgs
   behaviortree_ros2
   fetchsp_interface
 )

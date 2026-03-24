@@ -46,6 +46,18 @@ def generate_launch_description():
         IncludeLaunchDescription(
             PythonLaunchDescriptionSource(
                 os.path.join(           
+                    get_package_share_directory('livox_ros_driver2'),
+                    'launch',
+                    'msg_MID360_side.launch.py'
+                )
+            ),
+            condition=LaunchConfigurationEquals("localization", "pointlio"),
+            launch_arguments=[("use_sim_time", "false")]
+        ),
+        # PointLIO定位节点
+        IncludeLaunchDescription(
+            PythonLaunchDescriptionSource(
+                os.path.join(           
                     get_package_share_directory('point_lio'),
                     'launch',
                     'point_lio.launch.py'
@@ -107,6 +119,7 @@ def generate_launch_description():
             package="btcpp_ros2_samples",
             executable="sample_bt_executor",
             name="bt_executor",
-            output="screen"
+            output="screen",
+            parameters=[LaunchConfiguration("params")]
         ),
     ])

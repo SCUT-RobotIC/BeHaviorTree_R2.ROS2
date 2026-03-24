@@ -11,8 +11,8 @@ bool YoloNode::setGoal(Goal& goal)
 
 BT::PortsList YoloNode::providedPorts()
 {
-  BT::OutputPort<geometry_msgs::msg::Pose>("Align_Position", "The position to align with the target"),
   return providedBasicPorts({
+    BT::OutputPort<geometry_msgs::msg::Pose>("Align_Position", "The position to align with the target")
   }); 
 }
 

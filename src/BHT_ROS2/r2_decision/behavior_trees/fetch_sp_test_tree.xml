@@ -1,11 +1,14 @@
-<root>
+
+<root BTCPP_format="4">
     <BehaviorTree ID="MainTree">
         <Sequence>
             <RetryUntilSuccessful num_attempts="-1">
-                <R2Initial, timeout = 10, Position_To_FetchSp = {PTFSP}/>
-                <MoveToPosition, target_position = {PTFSP}/>
-                <TfListen, Target_Position = {PTFSP}, timeout = 10/>
-                <FetchSp, Align_Position = {Align_Position}/>
+                <Sequence>
+                    <R2Initial timeout="10" Position_To_FetchSp="{PTFSP}"/>
+                    <MoveToPosition target_position="{PTFSP}"/>
+                    <TfListen Target_Position="{PTFSP}" timeout="10"/>
+                    <FetchSp Align_Position="{Align_Position}"/>
+                </Sequence>
             </RetryUntilSuccessful>
         </Sequence>
     </BehaviorTree>

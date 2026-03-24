@@ -2,13 +2,13 @@
 #define ROBOT_ARM_HPP
 
 #include <rclcpp/rclcpp.hpp>
-#include "pose_interfaces/srv/arm_solve.hpp"
+#include "pose_interface/srv/arm_solve.hpp"
 #include <cmath>
 #include <memory>
 #include <vector>
 #include <geometry_msgs/msg/vector3.hpp>
 
-using ArmSolve = pose_interfaces::srv::ArmSolve;
+using ArmSolve = pose_interface::srv::ArmSolve;
 
 class RobotArmNode : public rclcpp::Node {
 public:
