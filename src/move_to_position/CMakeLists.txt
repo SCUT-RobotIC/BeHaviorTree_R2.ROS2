@@ -8,6 +8,7 @@ endif()
 # find dependencies
 find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
+find_package(rclcpp_action REQUIRED)
 find_package(geometry_msgs REQUIRED)
 find_package(movetp_interface REQUIRED)
 
@@ -20,6 +21,7 @@ target_include_directories(move_to_position_node PUBLIC
 
 ament_target_dependencies(move_to_position_node
   rclcpp
+  rclcpp_action
   geometry_msgs
   movetp_interface
 )

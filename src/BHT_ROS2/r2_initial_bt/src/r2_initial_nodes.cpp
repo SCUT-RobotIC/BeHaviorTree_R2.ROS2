@@ -12,6 +12,15 @@ R2InitialNode::R2InitialNode(const std::string& name, const BT::NodeConfig& conf
   {
     throw std::runtime_error("R2InitialNode requires a valid rclcpp::Node");
   }
+
+  // 声明参数（带默认值）
+  node_->declare_parameter<double>("output_pose_position_x", 800.0);
+  node_->declare_parameter<double>("output_pose_position_y", 0.0);
+  node_->declare_parameter<double>("output_pose_position_z", 0.0);
+  node_->declare_parameter<double>("output_pose_orientation_x", 0.0);
+  node_->declare_parameter<double>("output_pose_orientation_y", 0.0);
+  node_->declare_parameter<double>("output_pose_orientation_z", 0.0);
+  node_->declare_parameter<double>("output_pose_orientation_w", 1.0);
 }
 
 BT::PortsList R2InitialNode::providedPorts()
@@ -44,10 +53,14 @@ BT::NodeStatus R2InitialNode::onStart()
   createSubscription("/terraced_camera_image", "sensor_msgs/msg/Image", 10, received_flags_[3]);
 
   output_pose_ = geometry_msgs::msg::Pose();
-  output_pose_.position.x = 0.0;    
-  output_pose_.position.y = 0.0;
-  output_pose_.position.z = 0.0;
-  output_pose_.orientation.w = 1.0;
+  // 通过参数赋值
+  node_->get_parameter("output_pose_position_x", output_pose_.position.x);
+  node_->get_parameter("output_pose_position_y", output_pose_.position.y);
+  node_->get_parameter("output_pose_position_z", output_pose_.position.z);
+  node_->get_parameter("output_pose_orientation_x", output_pose_.orientation.x);
+  node_->get_parameter("output_pose_orientation_y", output_pose_.orientation.y);
+  node_->get_parameter("output_pose_orientation_z", output_pose_.orientation.z);
+  node_->get_parameter("output_pose_orientation_w", output_pose_.orientation.w);
 
   return BT::NodeStatus::RUNNING;
 }

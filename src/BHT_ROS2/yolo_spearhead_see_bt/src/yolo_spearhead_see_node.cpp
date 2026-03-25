@@ -19,9 +19,13 @@ BT::PortsList YoloNode::providedPorts()
 BT::NodeStatus YoloNode::onResultReceived(const WrappedResult& result)
 {
   geometry_msgs::msg::Pose target_position;
-  target_position.position.x = 10;  
-  target_position.position.y = 20;
-  target_position.position.z = 30;
+  target_position.position.x = 800;    
+  target_position.position.y = 200;
+  target_position.position.z = 0;
+  target_position.orientation.x = 0.0;
+  target_position.orientation.y = 0.0;  
+  target_position.orientation.z = 0.0;
+  target_position.orientation.w = 1.0;
 
   setOutput("Align_Position", target_position);
   
