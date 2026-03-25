@@ -27,16 +27,7 @@ class MyActionServer : public BT::TreeExecutionServer
 public:
   MyActionServer(const rclcpp::NodeOptions& options) : TreeExecutionServer(options)
   {
-    // here we assume that the battery voltage is published as a std_msgs::msg::Float32
-    sub_ = node()->create_subscription<std_msgs::msg::Float32>(
-        "battery_level", 10, [this](const std_msgs::msg::Float32::SharedPtr msg) {
-          // Update the global blackboard
-          globalBlackboard()->set("battery_level", msg->data);
-        });
-    // Note that the callback above and the execution of the tree accessing the
-    // global blackboard happen in two different threads.
-    // The former runs in the MultiThreadedExecutor, while the latter in the thread created
-    // by TreeExecutionServer. But this is OK because the blackboard is thread-safe.
+    // 可在此添加自定义初始化代码
   }
 
   void onTreeCreated(BT::Tree& tree) override
@@ -55,7 +46,6 @@ public:
 
 private:
   std::shared_ptr<BT::StdCoutLogger> logger_cout_;
-  rclcpp::Subscription<std_msgs::msg::Float32>::SharedPtr sub_;
 };
 
 int main(int argc, char* argv[])

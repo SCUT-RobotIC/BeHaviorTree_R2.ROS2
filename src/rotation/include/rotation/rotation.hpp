@@ -27,6 +27,9 @@ private:
     rclcpp_action::Server<Rotation>::SharedPtr rotation_action_server_;
     
     std::atomic<int> ack_{0};
+    std::condition_variable ack_cv_;
+    std::mutex ack_mutex_;
+    std::shared_ptr<rclcpp::TimerBase> timer;
 };
 
 } // namespace rotation

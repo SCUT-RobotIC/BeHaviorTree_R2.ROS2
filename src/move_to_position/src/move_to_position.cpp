@@ -1,17 +1,21 @@
 #include "move_to_position/move_to_position.hpp"
 #include <thread>
 #include "rclcpp_action/rclcpp_action.hpp"
+#include <condition_variable>
+#include <mutex>
 namespace move_to_position
 {
-
-
 MoveToPositionNode::MoveToPositionNode() : Node("move_to_position_node")
 {
-    target_pos_pub_ = this->create_publisher<geometry_msgs::msg::Point>("target_position", 10);
+    target_position_pub_ = this->create_publisher<geometry_msgs::msg::Point>("target_position", 10);
     ACK_sub = this->create_subscription<std_msgs::msg::Int16>(
         "ack", 10, [this](const std_msgs::msg::Int16::SharedPtr msg) {
             ack_.store(msg->data);
             RCLCPP_INFO(this->get_logger(), "Received ACK: %d", ack_.load());
+            if (ack_.load() == 2) {
+                std::lock_guard<std::mutex> lock(ack_mutex_);
+                ack_cv_.notify_all();
+            }
         });
     using namespace std::placeholders;
     move_to_position_action_server_ = rclcpp_action::create_server<MoveToPosition>(
@@ -52,11 +56,21 @@ void MoveToPositionNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
     target_position.y = goal->goal.y;
     target_position.z = goal->goal.z;
 
-    rclcpp::Rate rate(10); // 10Hz
-    while(ack_ != 2 && rclcpp::ok()){
-        target_pos_pub_->publish(target_position);
-        rate.sleep();
-    }
+    // 用定时器定时发布目标点，收到ack后停止定时器
+    timer = this->create_wall_timer(
+        std::chrono::milliseconds(50),
+        [this, &timer, target_position]() mutable {
+            if (ack_ != 2) {
+                target_position_pub_->publish(target_position);
+            } else {
+                timer->cancel();
+            }
+        }
+    );
+
+    // 用条件变量等待ack_变为2
+    std::unique_lock<std::mutex> lock(ack_mutex_);
+    ack_cv_.wait(lock, [this]() { return ack_ == 2 || !rclcpp::ok(); });
 
     result->success = true;
     goal_handle->succeed(result);

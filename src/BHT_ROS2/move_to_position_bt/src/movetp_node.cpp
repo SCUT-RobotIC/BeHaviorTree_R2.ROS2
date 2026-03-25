@@ -8,12 +8,12 @@ namespace move_to_position_bt
 
 bool MoveToPositionNode::setGoal(Goal& goal)
 {
-  auto target_pose = getInput<geometry_msgs::msg::Pose>("target_position");
-  if (!target_pose)
+  auto target_position = getInput<geometry_msgs::msg::Pose>("target_position");
+  if (!target_position)
   {
     return false;
   }
-  goal.goal = target_pose.value().position;
+  goal.goal = target_position.value().position;
   return true;
 }
 

@@ -11,6 +11,10 @@ RotationNode::RotationNode() : Node("rotation_node")
 		"ack", 10, [this](const std_msgs::msg::Int16::SharedPtr msg) {
 			ack_.store(msg->data);
 			RCLCPP_INFO(this->get_logger(), "Received ACK: %d", ack_.load());
+			if (ack_.load() == 2) {
+				std::lock_guard<std::mutex> lock(ack_mutex_);
+				ack_cv_.notify_all();
+			}
 		});
 
 	rotation_action_server_ = rclcpp_action::create_server<Rotation>(
@@ -47,11 +51,23 @@ void RotationNode::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
 	auto result = std::make_shared<Rotation::Result>();
 	std_msgs::msg::Int16 msg;
 	msg.data = goal->direction;
-	rclcpp::Rate rate(10); // 10Hz
-	while(ack_.load() != 2 && rclcpp::ok()){
-		direction_pub_->publish(msg);
-		rate.sleep();
-	}
+
+	// 用定时器定时发布目标点，收到ack后停止定时器
+	timer = this->create_wall_timer(
+		std::chrono::milliseconds(100),
+		[this, &msg]() mutable {
+			if (ack_ != 2) {
+				direction_pub_->publish(msg);
+			} else {
+				timer->cancel();
+			}
+		}
+	);
+
+	// 用条件变量等待ack_变为2
+	std::unique_lock<std::mutex> lock(ack_mutex_);
+	ack_cv_.wait(lock, [this]() { return ack_ == 2 || !rclcpp::ok(); });
+
 	result->success = true;
 	goal_handle->succeed(result);
 	RCLCPP_INFO(this->get_logger(), "Goal succeeded");

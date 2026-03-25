@@ -27,10 +27,13 @@ private:
     void execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle<MoveToPosition>> goal_handle);
 
     rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr ACK_sub;
-    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr target_pos_pub_;
+    rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr target_position_pub_;
     rclcpp_action::Server<MoveToPosition>::SharedPtr move_to_position_action_server_;
-    
+    std::shared_ptr<rclcpp::TimerBase> timer;
+
     std::atomic<int> ack_{0};
+    std::condition_variable ack_cv_; 
+    std::mutex ack_mutex_;
 };
 
 }  // namespace move_to_position

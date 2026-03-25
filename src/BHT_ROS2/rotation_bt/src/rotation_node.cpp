@@ -7,12 +7,12 @@ namespace rotation_bt
 
 bool RotationNode::setGoal(Goal& goal)
 {
-  auto target_value = getInput<int>("target_value");
-  if (!target_value)
+  auto target_direction = getInput<int>("target_direction");
+  if (!target_direction)
   {
     return false;
   }
-  goal.goal = target_value.value();
+  goal.direction = target_direction.value();
   return true;
 }
 
@@ -20,7 +20,7 @@ bool RotationNode::setGoal(Goal& goal)
 BT::PortsList RotationNode::providedPorts()
 {
   return providedBasicPorts({
-    BT::InputPort<int>("target_value"),
+    BT::InputPort<int>("target_direction"),
   });
 }
 
