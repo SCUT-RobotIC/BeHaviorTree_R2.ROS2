@@ -55,11 +55,11 @@ void RotationNode::execute(const std::shared_ptr<rclcpp_action::ServerGoalHandle
 	// 用定时器定时发布目标点，收到ack后停止定时器
 	timer = this->create_wall_timer(
 		std::chrono::milliseconds(100),
-		[this, &msg]() mutable {
-			if (ack_ != 2) {
-				direction_pub_->publish(msg);
+		[this, msg]() {
+			if (this->ack_.load() != 2) {
+				this->direction_pub_->publish(msg);
 			} else {
-				timer->cancel();
+				this->timer->cancel();
 			}
 		}
 	);

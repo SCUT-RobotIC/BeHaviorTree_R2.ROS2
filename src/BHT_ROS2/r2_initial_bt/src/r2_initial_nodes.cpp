@@ -26,7 +26,7 @@ R2InitialNode::R2InitialNode(const std::string& name, const BT::NodeConfig& conf
 BT::PortsList R2InitialNode::providedPorts()
 {
   return {
-    BT::InputPort<double>("timeout", 2.0, "Timeout seconds"),
+    BT::InputPort<double>("timeout", 10.0, "Timeout seconds"),
     BT::OutputPort<geometry_msgs::msg::Pose>("Position_To_FetchSp")
   };
 }
@@ -47,7 +47,7 @@ BT::NodeStatus R2InitialNode::onStart()
     received_flags_.push_back(std::make_shared<std::atomic_bool>(false));
   }
 
-  createSubscription("/Odometry", "nav_msgs/msg/Odometry", 10, received_flags_[0]);
+  createSubscription("/aft_mapped_to_init", "nav_msgs/msg/Odometry", 10, received_flags_[0]);
   createSubscription("/camera/camera/color/image_raw", "sensor_msgs/msg/Image", 10, received_flags_[1]);
   createSubscription("/camera/camera/aligned_depth_to_color/image_raw", "sensor_msgs/msg/Image", 10, received_flags_[2]);
   createSubscription("/terraced_camera_image", "sensor_msgs/msg/Image", 10, received_flags_[3]);

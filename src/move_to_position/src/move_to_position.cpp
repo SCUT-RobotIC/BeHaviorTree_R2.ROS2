@@ -59,11 +59,11 @@ void MoveToPositionNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
     // 用定时器定时发布目标点，收到ack后停止定时器
     timer = this->create_wall_timer(
         std::chrono::milliseconds(50),
-        [this, &timer, target_position]() mutable {
-            if (ack_ != 2) {
-                target_position_pub_->publish(target_position);
+        [this, target_position]() {
+            if (this->ack_.load() != 2) {
+                this->target_position_pub_->publish(target_position);
             } else {
-                timer->cancel();
+                this->timer->cancel();
             }
         }
     );
