@@ -131,9 +131,9 @@ void Stm32ControlNode::setup_ros_communications() {
     );
 
     // 动作码订阅
-    action_code_sub_ = this->create_subscription<std_msgs::msg::Int16>(
+    action_code_sub_ = this->create_subscription<std_msgs::msg::Uint8>(
         action_code_topic_, target_qos,
-        [this](const std_msgs::msg::Int16::SharedPtr msg) {
+        [this](const std_msgs::msg::Uint8::SharedPtr msg) {
             latest_action_code_.store(msg->data, std::memory_order_relaxed);
             action_code_updated_.store(true, std::memory_order_release);
         }

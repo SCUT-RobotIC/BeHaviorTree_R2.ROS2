@@ -3,12 +3,18 @@ stm32_control_node:
     frequency: 50.0
     odom_name: odom
     base_link_name: lidar
-    use_pose_topic_for_current_pose: true
-    current_pose_topic_name: /glim_ros/pose_corrected
-    goal_pose_topic_name: /target
+    goal_pose_topic_name: /target_position
     stag_center_topic_name: /stag_center
     stag_detected_topic_name: /stag_detected
+    stair_direction_topic_name: /stair_direction
+    target_heading_topic_name: /target_heading
     arm_angles_topic_name: /arm_angles
     yolo_offsets_topic_name: /yolo_detection_offsets
+    action_code_topic_name: /stm32/action_code
     stm32_read_topic: stm32/read
     stm32_write_topic: stm32/write
+    publish_ack_flag: true
+    ack_flag_topic_name: /ACK
+    stair_lift_height_topic_name: /stair_lift_height
+    use_pose_topic_for_current_pose: true
+    current_pose_topic_name: /glim_ros/pose_corrected

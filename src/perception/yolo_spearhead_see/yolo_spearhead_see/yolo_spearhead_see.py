@@ -78,7 +78,7 @@ class YOLOSpearheadSeeNode(Node):
 
         self.ACK_sub = self.create_subscription(
             Int16, 
-            'ACK',
+            '/ACK',
             self.ACK_callback,
             10,
             callback_group=self.sub_group

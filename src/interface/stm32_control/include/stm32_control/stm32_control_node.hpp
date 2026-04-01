@@ -101,7 +101,7 @@ private:
   rclcpp::Subscription<geometry_msgs::msg::Int16>::SharedPtr stair_lift_height_sub_;               // 目标点订阅
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr target_sub_;               // 目标点订阅
   rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr target_heading_sub_;            // 目标朝向订阅
-  rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr action_code_sub_;               // 动作码订阅
+  rclcpp::Subscription<std_msgs::msg::Uint8>::SharedPtr action_code_sub_;               // 动作码订阅
   rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr stair_direction_sub_;           // 台阶方向订阅
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr stag_center_sub_;          // STAG码中心点订阅
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr stag_detected_sub_;              // STAG码检测状态订阅
