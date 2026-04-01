@@ -1,6 +1,15 @@
 #include "stm32_control/stm32_control_node.hpp"
 #include "stm32_control/serial_packet.hpp"
 
+/**
+ * @file stm32_control_node_runtime.cpp
+ * @brief 运行时数据构建与定时发送逻辑实现
+ */
+
+/**
+ * @brief 构建数据快照（线程安全地从各个数据源拷贝当前值）
+ * @return DataSnapshot 包含当前可用于填充数据包的所有字段
+ */
 Stm32ControlNode::DataSnapshot Stm32ControlNode::build_snapshot() {
     DataSnapshot snapshot;
 
@@ -32,6 +41,9 @@ Stm32ControlNode::DataSnapshot Stm32ControlNode::build_snapshot() {
     return snapshot;
 }
 
+/**
+ * @brief 定时器回调：构建数据包并发布给串口层
+ */
 void Stm32ControlNode::send_timer_callback() {
     const DataSnapshot snapshot = build_snapshot();
 
@@ -43,6 +55,7 @@ void Stm32ControlNode::send_timer_callback() {
     }
     packet_struct.action = action_code_to_send_.load(std::memory_order_relaxed);
 
+    // 填充数据包字段：位置信息、目标点、STAG检测、机械臂状态和YOLO偏移
     fill_pose_fields(packet_struct, snapshot);
     fill_target_fields(packet_struct, snapshot);
     fill_stag_fields(packet_struct, snapshot);
@@ -51,6 +64,9 @@ void Stm32ControlNode::send_timer_callback() {
     publish_packet(packet_struct);
 }
 
+/**
+ * @brief 填充位置信息字段到数据包
+ */
 void Stm32ControlNode::fill_pose_fields(
     serial_protocol::SerialPacket& packet_struct,
     const DataSnapshot& snapshot) {
@@ -72,15 +88,22 @@ void Stm32ControlNode::fill_pose_fields(
     packet_struct.y_real = snapshot.pose.y_real;
 }
 
+/**
+ * @brief 填充目标点相关字段
+ */
 void Stm32ControlNode::fill_target_fields(
     serial_protocol::SerialPacket& packet_struct,
     const DataSnapshot& snapshot) {
     packet_struct.x_target = snapshot.target.x_target;
     packet_struct.y_target = snapshot.target.y_target;
-    packet_struct.target_heading = snapshot.target.heading;
+    packet_struct.target_heading = snapshot.target.target_heading;
     packet_struct.stair_direction = snapshot.target.stair_direction;
+    packet_struct.stair_lift_height = snapshot.target.stair_lift_height;
 }
 
+/**
+ * @brief 填充 STAG（矛头）检测相关字段
+ */
 void Stm32ControlNode::fill_stag_fields(
     serial_protocol::SerialPacket& packet_struct,
     const DataSnapshot& snapshot) {
@@ -97,6 +120,9 @@ void Stm32ControlNode::fill_stag_fields(
     }
 }
 
+/**
+ * @brief 填充机械臂相关字段（如果存在有效的机械臂反馈）
+ */
 void Stm32ControlNode::fill_arm_fields(
     serial_protocol::SerialPacket& packet_struct,
     const DataSnapshot& snapshot) {
@@ -117,6 +143,9 @@ void Stm32ControlNode::fill_arm_fields(
     }
 }
 
+/**
+ * @brief 填充 YOLO 偏移字段（若数据新鲜则使用，否则置零）
+ */
 void Stm32ControlNode::fill_yolo_fields(
     serial_protocol::SerialPacket& packet_struct,
     const DataSnapshot& snapshot) {
@@ -131,6 +160,9 @@ void Stm32ControlNode::fill_yolo_fields(
     }
 }
 
+/**
+ * @brief 将 SerialPacket 序列化为字节向量并通过 `tx_pub_` 发布
+ */
 void Stm32ControlNode::publish_packet(const serial_protocol::SerialPacket& packet_struct) {
     std::vector<uint8_t> buffer_to_send;
     serial_protocol::serialize_packet(packet_struct, buffer_to_send);
@@ -140,6 +172,9 @@ void Stm32ControlNode::publish_packet(const serial_protocol::SerialPacket& packe
     tx_pub_->publish(msg);
 }
 
+/**
+ * @brief 处理从串口层接收到的数据包（反序列化并更新内部状态）
+ */
 void Stm32ControlNode::on_packet_received(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
     try {
         serial_protocol::SerialPacket packet_struct = serial_protocol::deserialize_packet(msg->data);

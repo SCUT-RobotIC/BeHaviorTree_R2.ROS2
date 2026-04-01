@@ -1,5 +1,13 @@
 #include "stm32_control/stm32_control_node.hpp"
 
+/**
+ * @file stm32_control_node_params.cpp
+ * @brief 参数加载与辅助函数实现
+ */
+
+/**
+ * @brief 从参数服务器读取节点所需参数并保存到成员变量
+ */
 void Stm32ControlNode::load_parameters() {
     frequency_ = this->declare_parameter<double>("frequency", 50.0);
     odom_frame_ = this->declare_parameter<std::string>("odom_name", "lidar_odom");
@@ -7,42 +15,41 @@ void Stm32ControlNode::load_parameters() {
     goal_pose_topic_ = this->declare_parameter<std::string>("goal_pose_topic_name", "/goal_pose");
     stag_center_topic_ = this->declare_parameter<std::string>("stag_center_topic_name", "/stag_center");
     stag_detected_topic_ = this->declare_parameter<std::string>("stag_detected_topic_name", "/stag_detected");
-    target_heading_topic_ = this->declare_parameter<std::string>("target_heading_topic_name", "/target_heading");
     stair_direction_topic_ = this->declare_parameter<std::string>("stair_direction_topic_name", "/stair_direction");
+    target_heading_topic_ = this->declare_parameter<std::string>("target_heading_topic_name", "/target_heading");
     arm_angles_topic_ = this->declare_parameter<std::string>("arm_angles_topic_name", "/arm_angles");
     yolo_offsets_topic_ = this->declare_parameter<std::string>("yolo_offsets_topic_name", "/yolo_detection_offsets");
     action_code_topic_ = this->declare_parameter<std::string>("action_code_topic_name", "/stm32/action_code");
     stm32_read_topic_ = this->declare_parameter<std::string>("stm32_read_topic", "stm32/read");
     stm32_write_topic_ = this->declare_parameter<std::string>("stm32_write_topic", "stm32/write");
-    publish_ack_flag_ = this->declare_parameter<bool>("publish_ack_flag", false);
+    publish_ack_flag_ = this->declare_parameter<bool>("publish_ack_flag", true);
     ack_flag_topic_ = this->declare_parameter<std::string>("ack_flag_topic_name", "/stm32/ack_flag");
-    use_pose_topic_for_current_pose_ = this->declare_parameter<bool>("use_pose_topic_for_current_pose", false);
-    current_pose_topic_ = this->declare_parameter<std::string>("current_pose_topic_name", "/glim_ros/pose_corrected");
+    stair_lift_height_topic_ = this->declare_parameter<std::string>("stair_lift_height_topic_name", "/stair_lift_height"); 
+    use_pose_topic_for_current_pose_ = this->declare_parameter<bool>("use_pose_topic_for_current_pose", false);         // glim 算法下位姿订阅开关
+    current_pose_topic_ = this->declare_parameter<std::string>("current_pose_topic_name", "/glim_ros/pose_corrected");  // glim 算法下位姿订阅
 }
-
+/**
+ * @brief 将 double 值限定到 int16_t 范围并四舍五入
+ * @param value 输入的 double 值
+ * @return 限定并转换为 int16_t 的值
+ */
 int16_t Stm32ControlNode::clamp_to_i16(double value) {
     constexpr double min_v = -32768.0;
     constexpr double max_v = 32767.0;
     return static_cast<int16_t>(std::clamp(std::round(value), min_v, max_v));
 }
 
+/**
+ * @brief 设置节点与 ROS 网络的通信（订阅/发布）
+ *
+ * 包括动作码、目标点、机械臂角度、YOLO 偏移等订阅，以及
+ * 根据配置选择是否发布 ACK 标志。
+ */
 void Stm32ControlNode::setup_ros_communications() {
     // Target Subs
     auto target_qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
 
-    action_code_sub_ = this->create_subscription<std_msgs::msg::Int16>(
-        action_code_topic_, target_qos,
-        [this](const std_msgs::msg::Int16::SharedPtr msg) {
-            latest_action_code_.store(msg->data, std::memory_order_relaxed);
-            action_code_updated_.store(true, std::memory_order_release);
-        }
-    );
-
-    if (publish_ack_flag_) {
-        ack_flag_pub_ = this->create_publisher<std_msgs::msg::Int16>(ack_flag_topic_, 10);
-        RCLCPP_INFO(this->get_logger(), "ACK flag publish enabled on topic '%s'", ack_flag_topic_.c_str());
-    }
-
+    // 目标点订阅
     target_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
         goal_pose_topic_, target_qos,
         [this](const geometry_msgs::msg::Point::SharedPtr msg) {
@@ -54,27 +61,7 @@ void Stm32ControlNode::setup_ros_communications() {
         }
     );
 
-    target_heading_sub_ = this->create_subscription<std_msgs::msg::Int16>(
-        target_heading_topic_, 10,
-        [this](const std_msgs::msg::Int16::SharedPtr msg) {
-            const int16_t heading = std::clamp<int16_t>(msg->data, 0, 3);
-            std::lock_guard<std::mutex> lock(target_mutex_);
-            this->target_data_.heading = heading;
-            this->target_data_.last_update_time = this->now();
-        }
-    );
-
-    stair_direction_sub_ = this->create_subscription<std_msgs::msg::Int16>(
-        stair_direction_topic_, 10,
-        [this](const std_msgs::msg::Int16::SharedPtr msg) {
-            const int16_t direction = std::clamp<int16_t>(msg->data, 0, 1);
-            std::lock_guard<std::mutex> lock(target_mutex_);
-            this->target_data_.stair_direction = direction;
-            this->target_data_.last_update_time = this->now();
-        }
-    );
-
-    // STAG
+    // STAG码中心坐标订阅
     stag_center_sub_ = this->create_subscription<geometry_msgs::msg::Point>(
         stag_center_topic_, 10,
         [this](const geometry_msgs::msg::Point::SharedPtr msg) {
@@ -85,6 +72,7 @@ void Stm32ControlNode::setup_ros_communications() {
         }
     );
 
+    // STAG码检测状态订阅
     stag_detected_sub_ = this->create_subscription<std_msgs::msg::Bool>(
         stag_detected_topic_, 10,
         [this](const std_msgs::msg::Bool::SharedPtr msg) {
@@ -93,7 +81,27 @@ void Stm32ControlNode::setup_ros_communications() {
         }
     );
 
-    // Arm data comes from topic only.
+    // 台阶方向订阅(上下台阶)
+    stair_direction_sub_ = this->create_subscription<std_msgs::msg::Int16>(
+        stair_direction_topic_, 10,
+        [this](const std_msgs::msg::Int16::SharedPtr msg) {
+            std::lock_guard<std::mutex> lock(stag_mutex_);
+            this->stag_data_.stair_direction = msg->data;
+        }
+    );
+
+    // 目标方向订阅
+    target_heading_sub_ = this->create_subscription<std_msgs::msg::Int16>(
+        target_heading_topic_, 10,
+        [this](const std_msgs::msg::Int16::SharedPtr msg) {
+            const int16_t target_heading = std::clamp<int16_t>(msg->data, 0, 3);
+            std::lock_guard<std::mutex> lock(target_mutex_);
+            this->target_data_.target_heading = target_heading;
+            this->target_data_.last_update_time = this->now();
+        }
+    );
+
+    // 机械臂角度订阅，单位为度，乘以10后转换为 int16_t 发送给下位机
     arm_angles_sub_ = this->create_subscription<std_msgs::msg::Float64MultiArray>(
         arm_angles_topic_, 10,
         [this](const std_msgs::msg::Float64MultiArray::SharedPtr msg) {
@@ -108,8 +116,8 @@ void Stm32ControlNode::setup_ros_communications() {
         }
     );
     RCLCPP_INFO(this->get_logger(), "Arm angle source: topic '%s'", arm_angles_topic_.c_str());
-
-    // YOLO
+    
+    // YOLO偏移订阅（矛头夹取节点）
     yolo_offsets_sub_ = this->create_subscription<std_msgs::msg::Float32MultiArray>(
         yolo_offsets_topic_, 10,
         [this](const std_msgs::msg::Float32MultiArray::SharedPtr msg) {
@@ -122,6 +130,40 @@ void Stm32ControlNode::setup_ros_communications() {
         }
     );
 
+    // 动作码订阅
+    action_code_sub_ = this->create_subscription<std_msgs::msg::Int16>(
+        action_code_topic_, target_qos,
+        [this](const std_msgs::msg::Int16::SharedPtr msg) {
+            latest_action_code_.store(msg->data, std::memory_order_relaxed);
+            action_code_updated_.store(true, std::memory_order_release);
+        }
+    );
+
+    // 串口通信订阅：接收来自串口通信层的反馈数据
+    rx_sub_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
+        stm32_read_topic_, 10,
+        std::bind(&Stm32ControlNode::on_packet_received, this, std::placeholders::_1)
+    );
+
+    // 串口通信发布：发送数据包给串口通信层
+    tx_pub_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(stm32_write_topic_, 10);
+
+    // 可选的 ACK 标志发布者，根据参数配置决定是否启用
+    if (publish_ack_flag_) {
+        ack_flag_pub_ = this->create_publisher<std_msgs::msg::Int16>(ack_flag_topic_, 10);
+        RCLCPP_INFO(this->get_logger(), "ACK flag publish enabled on topic '%s'", ack_flag_topic_.c_str());
+    }
+
+    // 台阶抬升高度订阅
+    stair_lift_height_sub_ = this->create_subscription<geometry_msgs::msg::Int16>(
+        stair_lift_height_topic_, 10,
+        [this](const geometry_msgs::msg::Int16::SharedPtr msg) {
+            std::lock_guard<std::mutex> lock(target_mutex_);
+            this->target_data_.stair_lift_height = msg->data;
+        }
+    );
+    
+    // 是否使用glim算法提供的位姿订阅，如果启用则订阅当前位姿话题，否则在发送数据包时通过TF获取当前位姿
     if (use_pose_topic_for_current_pose_) {
         current_pose_sub_ = this->create_subscription<geometry_msgs::msg::PoseStamped>(
             current_pose_topic_, 10,

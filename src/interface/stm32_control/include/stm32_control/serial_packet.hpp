@@ -1,8 +1,13 @@
-// ========================================
-// 定义串口通信数据包结构体及其相关函数 (v2.0 协议 + Padding)
-// ========================================
 #ifndef STM32_CONTROL__SERIAL_PACKET_HPP_
 #define STM32_CONTROL__SERIAL_PACKET_HPP_
+
+/**
+ * @file serial_packet.hpp
+ * @brief 定义与 STM32 通信的数据包结构与序列化/反序列化工具
+ *
+ * 包含数据包的字节布局、头/尾常量、发送/接收长度以及用于
+ * 将结构体与字节向量相互转换的辅助函数。
+ */
 
 #include "stm32_control/common_headers.hpp"
 #include "stm32_control/action_codes.hpp"
@@ -17,29 +22,30 @@ const std::vector<uint8_t> FOOTER = {0xBB, 0xBB};
 
 const size_t SEND_PACKET_SIZE = 64;
 const size_t RECV_PACKET_SIZE = 66;
-const size_t PACKET_SIZE = RECV_PACKET_SIZE; 
+const size_t PACKET_SIZE = RECV_PACKET_SIZE;
 
 struct SerialPacket {
   uint8_t head[2] = {0xAA, 0xAA};
-  int16_t action = static_cast<int16_t>(ActionCode::IDLE);
-  int16_t ack_flag = 0;
-  int16_t x_real = 0;
-  int16_t y_real = 0;
-  int16_t x_target = 0;
-  int16_t y_target = 0;
+  int16_t action = static_cast<int16_t>(ActionCode::IDLE);  // 动作码
+  int16_t ack_flag = 0;        // ACK 标志：0-动作未开始，1-动作成功，2-动作失败
+  int16_t x_real = 0;          // 实际X坐标
+  int16_t y_real = 0;          // 实际Y坐标
+  int16_t x_target = 0;        // 目标X坐标
+  int16_t y_target = 0;        // 目标Y坐标
   int16_t target_heading = 0;  // 0:前, 1:左, 2:后, 3:右
   int16_t stair_direction = 0; // 0:上台阶, 1:下台阶
-  int16_t stag_x = 0;
-  int16_t stag_y = 0;
-  int16_t stag_detected = 0;
-  int16_t arm_send_count = 0;
-  int16_t arm_joint1 = 0;
-  int16_t arm_joint2 = 0; 
-  int16_t arm_joint3 = 0; 
-  int16_t arm_yaw = 0;
-  int16_t x_offset = 0;
-  int16_t y_offset = 0;
-  uint8_t reserved[26] = {0};
+  int16_t stag_x = 0;          // 对齐X坐标（相对于机器人中心）  
+  int16_t stag_y = 0;          // 对齐Y坐标（相对于机器人中心）
+  int16_t stag_detected = 0;   // stag码检测状态：0-未检测到，1-检测到 
+  int16_t arm_send_count = 0;  // 机械臂数据发送计数，0表示无效数据，1表示有效数据
+  int16_t arm_joint1 = 0;      // 机械臂关节1角度（0.1度单位） 
+  int16_t arm_joint2 = 0;      // 机械臂关节2角度（0.1度单位）
+  int16_t arm_joint3 = 0;      // 机械臂关节3角度（0.1度单位）
+  int16_t arm_yaw = 0;         // 机械臂底盘偏航角（0.1度单位）
+  int16_t x_offset = 0;        // 矛头x偏移
+  int16_t y_offset = 0;        // 矛头y偏移
+  int16_t stair_lift_height = 0; // 抬升高度(mm): 200/400，位于保留位起始2字节
+  uint8_t reserved[24] = {0};  // 保留字节，填充0
   uint8_t tail[2] = {0xBB, 0xBB};
 
   SerialPacket() {
@@ -50,6 +56,7 @@ struct SerialPacket {
   }
 };
 
+// 将 SerialPacket 结构体序列化为字节向量，以便通过串口发送
 inline void serialize_packet(const SerialPacket& packet, std::vector<uint8_t>& buffer) {
   buffer.resize(SEND_PACKET_SIZE);
 
@@ -89,15 +96,18 @@ inline void serialize_packet(const SerialPacket& packet, std::vector<uint8_t>& b
   buffer[33] = (packet.x_offset >> 8) & 0xFF;
   buffer[34] = packet.y_offset & 0xFF;
   buffer[35] = (packet.y_offset >> 8) & 0xFF;
-
-  for (size_t i = 0; i < 26; ++i) {
-    buffer[36 + i] = packet.reserved[i];
+  buffer[36] = packet.stair_lift_height & 0xFF;
+  buffer[37] = (packet.stair_lift_height >> 8) & 0xFF;
+TargetData
+  for (size_t i = 0; i < 24; ++i) {
+    buffer[38 + i] = packet.reserved[i];
   }
 
   buffer[62] = packet.tail[0];
   buffer[63] = packet.tail[1];
 }
 
+// 将接收到的字节向量反序列化为 SerialPacket 结构体
 inline SerialPacket deserialize_packet(const std::vector<uint8_t>& data_buffer) {
   if (data_buffer.size() < RECV_PACKET_SIZE) {
     throw std::runtime_error("Received data buffer is too small to deserialize a SerialPacket.");
@@ -125,9 +135,10 @@ inline SerialPacket deserialize_packet(const std::vector<uint8_t>& data_buffer) 
   packet.arm_yaw = utils::combine_bytes<int16_t>(&data_buffer[32]);
   packet.x_offset = utils::combine_bytes<int16_t>(&data_buffer[34]);
   packet.y_offset = utils::combine_bytes<int16_t>(&data_buffer[36]);
+  packet.stair_lift_height = utils::combine_bytes<int16_t>(&data_buffer[38]);
 
-  for (size_t i = 0; i < 26; ++i) {
-    packet.reserved[i] = data_buffer[38 + i];
+  for (size_t i = 0; i < 24; ++i) {
+    packet.reserved[i] = data_buffer[40 + i];
   }
 
   packet.tail[0] = data_buffer[64];
@@ -136,6 +147,7 @@ inline SerialPacket deserialize_packet(const std::vector<uint8_t>& data_buffer) 
   return packet;
 }
 
+// 辅助函数：格式化 SerialPacket 内容为可读字符串（调试用）
 inline std::string format_packet_for_debug(const SerialPacket& packet, bool include_hex = true) {
   std::stringstream ss;
   ss << "Action: " << static_cast<int>(packet.action)
@@ -149,6 +161,7 @@ inline std::string format_packet_for_debug(const SerialPacket& packet, bool incl
     << ", ArmSendCount: " << packet.arm_send_count
     << ", Arm: [" << packet.arm_joint1/10.0 << "," << packet.arm_joint2/10.0 
     << "," << packet.arm_joint3/10.0 << "," << packet.arm_yaw/10.0 << "]"
+    << ", StairLiftHeight(mm): " << packet.stair_lift_height
     << ", YOLO Offset: (" << packet.x_offset << "," << packet.y_offset << ")";
 
   if (include_hex) {

@@ -1,19 +1,18 @@
 #include "stm32_control/stm32_control_node.hpp"
 
+/**
+ * @file stm32_control_node.cpp
+ * @brief 实现 Stm32ControlNode 构造与主入口
+ */
+
+/**
+ * @brief 构造函数：加载参数、初始化 TF、发布/订阅并启动周期定时器
+ */
 Stm32ControlNode::Stm32ControlNode() : Node("stm32_control_node") {
     load_parameters();
 
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
     tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
-
-    // Publisher for outgoing packets to communication node
-    tx_pub_ = this->create_publisher<std_msgs::msg::UInt8MultiArray>(stm32_write_topic_, 10);
-
-    // Subscriber for incoming packets from communication node
-    rx_sub_ = this->create_subscription<std_msgs::msg::UInt8MultiArray>(
-        stm32_read_topic_, 10,
-        std::bind(&Stm32ControlNode::on_packet_received, this, std::placeholders::_1)
-    );
 
     setup_ros_communications();
 

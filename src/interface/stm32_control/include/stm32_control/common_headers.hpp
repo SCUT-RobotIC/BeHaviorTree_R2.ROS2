@@ -1,6 +1,14 @@
 #ifndef COMMON_HEADERS_HPP_
 #define COMMON_HEADERS_HPP_
 
+/**
+ * @file common_headers.hpp
+ * @brief 常用头文件集合，用于stm32_control组件的公共包含项
+ *
+ * 将 ROS、TF、消息类型以及常用 C++ 标准库头集中在一个文件，
+ * 便于在模块内统一包含。
+ */
+
 #include "rclcpp/rclcpp.hpp"
 #include "geometry_msgs/msg/twist.hpp"
 #include "geometry_msgs/msg/point.hpp"
