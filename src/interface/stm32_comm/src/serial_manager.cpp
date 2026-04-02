@@ -1,5 +1,4 @@
 #include "stm32_comm/serial_manager.hpp"
-#include "stm32_comm/serial_packet.hpp"
 
 /**
  * @brief configure() -> read_loop() -> process_buffer() -> receive_callback

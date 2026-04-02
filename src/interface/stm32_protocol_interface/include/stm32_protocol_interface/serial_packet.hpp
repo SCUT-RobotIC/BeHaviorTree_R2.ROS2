@@ -1,5 +1,5 @@
-#ifndef STM32_CONTROL__SERIAL_PACKET_HPP_
-#define STM32_CONTROL__SERIAL_PACKET_HPP_
+#ifndef STM32_PROTOCOL_INTERFACE__SERIAL_PACKET_HPP_
+#define STM32_PROTOCOL_INTERFACE__SERIAL_PACKET_HPP_
 
 /**
  * @file serial_packet.hpp
@@ -9,11 +9,9 @@
  * 将结构体与字节向量相互转换的辅助函数。
  */
 
-#include "stm32_control/common_headers.hpp"
-#include "stm32_control/action_codes.hpp"
-#include "stm32_control/utils.hpp"
-#include <sstream>
-#include <iomanip>
+#include "stm32_protocol_interface/common_headers.hpp"
+#include "stm32_protocol_interface/action_codes.hpp"
+#include "stm32_protocol_interface/utils.hpp"
 
 namespace serial_protocol {
 
@@ -98,7 +96,7 @@ inline void serialize_packet(const SerialPacket& packet, std::vector<uint8_t>& b
   buffer[35] = (packet.y_offset >> 8) & 0xFF;
   buffer[36] = packet.stair_lift_height & 0xFF;
   buffer[37] = (packet.stair_lift_height >> 8) & 0xFF;
-TargetData
+
   for (size_t i = 0; i < 24; ++i) {
     buffer[38 + i] = packet.reserved[i];
   }
@@ -177,4 +175,4 @@ inline std::string format_packet_for_debug(const SerialPacket& packet, bool incl
 
 } // namespace serial_protocol
 
-#endif // STM32_CONTROL__SERIAL_PACKET_HPP_
+#endif // STM32_PROTOCOL_INTERFACE__SERIAL_PACKET_HPP_

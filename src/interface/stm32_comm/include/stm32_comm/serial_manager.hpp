@@ -2,6 +2,7 @@
 #define STM32_COMM__SERIAL_MANAGER_HPP_
 
 #include "stm32_comm/common_headers.hpp"
+#include "stm32_protocol_interface/serial_packet.hpp"
 
 /**
  * @class SerialManager

@@ -1,18 +1,19 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>stm32_comm</name>
+  <name>stm32_protocol_interface</name>
   <version>0.0.1</version>
-  <description>STM32 Communication Package</description>
+  <description>STM32 通信协议定义包：数据包结构、序列化工具和动作码枚举。供 stm32_comm 和 stm32_control 共享使用。</description>
   <maintainer email="user@example.com">User</maintainer>
   <license>TODO: License declaration</license>
 
   <buildtool_depend>ament_cmake</buildtool_depend>
 
+  <!-- 协议定义依赖 -->
   <depend>rclcpp</depend>
-  <depend>std_msgs</depend>
-  <depend>serial</depend>
-  <depend>stm32_protocol_interface</depend>
+  <depend>geometry_msgs</depend>
+  <depend>tf2_ros</depend>
+  <depend>tf2_geometry_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>ament_lint_common</test_depend>

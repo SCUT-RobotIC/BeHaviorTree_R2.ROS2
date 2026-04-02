@@ -86,7 +86,7 @@ void Stm32ControlNode::setup_ros_communications() {
         stair_direction_topic_, 10,
         [this](const std_msgs::msg::Int16::SharedPtr msg) {
             std::lock_guard<std::mutex> lock(stag_mutex_);
-            this->stag_data_.stair_direction = msg->data;
+            this->target_data_.stair_direction = msg->data;
         }
     );
 
@@ -131,9 +131,9 @@ void Stm32ControlNode::setup_ros_communications() {
     );
 
     // 动作码订阅
-    action_code_sub_ = this->create_subscription<std_msgs::msg::Uint8>(
+    action_code_sub_ = this->create_subscription<std_msgs::msg::Byte>(
         action_code_topic_, target_qos,
-        [this](const std_msgs::msg::Uint8::SharedPtr msg) {
+        [this](const std_msgs::msg::Byte::SharedPtr msg) {
             latest_action_code_.store(msg->data, std::memory_order_relaxed);
             action_code_updated_.store(true, std::memory_order_release);
         }
@@ -155,9 +155,9 @@ void Stm32ControlNode::setup_ros_communications() {
     }
 
     // 台阶抬升高度订阅
-    stair_lift_height_sub_ = this->create_subscription<geometry_msgs::msg::Int16>(
+    stair_lift_height_sub_ = this->create_subscription<std_msgs::msg::Int16>(
         stair_lift_height_topic_, 10,
-        [this](const geometry_msgs::msg::Int16::SharedPtr msg) {
+        [this](const std_msgs::msg::Int16::SharedPtr msg) {
             std::lock_guard<std::mutex> lock(target_mutex_);
             this->target_data_.stair_lift_height = msg->data;
         }

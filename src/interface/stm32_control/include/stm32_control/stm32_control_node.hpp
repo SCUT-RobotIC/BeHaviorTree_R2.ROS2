@@ -2,11 +2,12 @@
 #define STM32_CONTROL__STM32_CONTROL_NODE_HPP_
 
 #include "stm32_control/common_headers.hpp"
-#include "stm32_control/serial_packet.hpp"
-#include "stm32_control/action_codes.hpp"
+#include "stm32_protocol_interface/serial_packet.hpp"
+#include "stm32_protocol_interface/action_codes.hpp"
 
 #include "std_msgs/msg/float32_multi_array.hpp"
 #include "std_msgs/msg/u_int8_multi_array.hpp"
+#include "std_msgs/msg/byte.hpp"
 
 #include <memory>
 #include <mutex>
@@ -98,10 +99,10 @@ private:
   rclcpp::Publisher<std_msgs::msg::Int16>::SharedPtr ack_flag_pub_;                     // 可选的 ACK 标志发布者
   rclcpp::Subscription<std_msgs::msg::UInt8MultiArray>::SharedPtr rx_sub_;              // 订阅来自串口通信层的反馈数据
 
-  rclcpp::Subscription<geometry_msgs::msg::Int16>::SharedPtr stair_lift_height_sub_;               // 目标点订阅
+  rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr stair_lift_height_sub_;                // 台阶抬升高度订阅
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr target_sub_;               // 目标点订阅
   rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr target_heading_sub_;            // 目标朝向订阅
-  rclcpp::Subscription<std_msgs::msg::Uint8>::SharedPtr action_code_sub_;               // 动作码订阅
+  rclcpp::Subscription<std_msgs::msg::Byte>::SharedPtr action_code_sub_;               // 动作码订阅
   rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr stair_direction_sub_;           // 台阶方向订阅
   rclcpp::Subscription<geometry_msgs::msg::Point>::SharedPtr stag_center_sub_;          // STAG码中心点订阅
   rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr stag_detected_sub_;              // STAG码检测状态订阅
@@ -125,6 +126,7 @@ private:
   std::string arm_angles_topic_;
   std::string yolo_offsets_topic_;
   std::string action_code_topic_;
+  std::string stair_lift_height_topic_;  // 台阶抬升高度话题
   std::string stm32_read_topic_;
   std::string stm32_write_topic_;
   std::string ack_flag_topic_;
@@ -132,9 +134,9 @@ private:
   bool use_pose_topic_for_current_pose_;
   bool publish_ack_flag_;
 
-  std::atomic<int16_t> latest_action_code_{static_cast<int16_t>(ActionCode::IDLE)};
+  std::atomic<uint8_t> latest_action_code_ = static_cast<uint8_t>(ActionCode::IDLE);
   std::atomic<bool> action_code_updated_{false};
-  std::atomic<int16_t> action_code_to_send_{static_cast<int16_t>(ActionCode::IDLE)};
+  std::atomic<uint8_t> action_code_to_send_ = static_cast<uint8_t>(ActionCode::IDLE);
 
   TargetData target_data_;
   PoseData pose_data_;

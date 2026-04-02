@@ -1,7 +1,7 @@
-#ifndef STM32_CONTROL__UTILS_HPP_
-#define STM32_CONTROL__UTILS_HPP_
+#ifndef STM32_PROTOCOL_INTERFACE__UTILS_HPP_
+#define STM32_PROTOCOL_INTERFACE__UTILS_HPP_
 
-#include "stm32_control/common_headers.hpp"
+#include "stm32_protocol_interface/common_headers.hpp"
 #include <cstring>
 
 /**
@@ -85,4 +85,4 @@ inline T combine_bytes(const uint8_t* data) {
 
 } // namespace utils
 
-#endif // STM32_CONTROL__UTILS_HPP_
+#endif // STM32_PROTOCOL_INTERFACE__UTILS_HPP_

@@ -14,6 +14,7 @@ find_package(tf2_ros REQUIRED)
 find_package(tf2_geometry_msgs REQUIRED)
 find_package(nav2_msgs REQUIRED)
 find_package(sensor_msgs REQUIRED)
+find_package(stm32_protocol_interface REQUIRED)
 
 include_directories(include)
 
@@ -36,6 +37,7 @@ ament_target_dependencies(stm32_control_node
   tf2_geometry_msgs
   nav2_msgs
   sensor_msgs
+  stm32_protocol_interface
 )
 
 install(TARGETS stm32_control_node

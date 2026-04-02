@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(std_msgs REQUIRED)
 find_package(serial REQUIRED)
+find_package(stm32_protocol_interface REQUIRED)
 
 include_directories(include)
 
@@ -23,7 +24,7 @@ target_include_directories(stm32_comm_node PUBLIC
   $<INSTALL_INTERFACE:include>
 )
 
-ament_target_dependencies(stm32_comm_node rclcpp std_msgs serial)
+ament_target_dependencies(stm32_comm_node rclcpp std_msgs serial stm32_protocol_interface)
 
 install(TARGETS stm32_comm_node
   DESTINATION lib/${PROJECT_NAME})

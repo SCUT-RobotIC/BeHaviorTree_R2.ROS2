@@ -1,5 +1,5 @@
 #include "stm32_control/stm32_control_node.hpp"
-#include "stm32_control/serial_packet.hpp"
+#include "stm32_protocol_interface/serial_packet.hpp"
 
 /**
  * @file stm32_control_node_runtime.cpp
