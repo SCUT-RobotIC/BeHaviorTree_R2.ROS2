@@ -12,14 +12,14 @@ void Stm32ControlNode::load_parameters() {
     frequency_ = this->declare_parameter<double>("frequency", 50.0);
     odom_frame_ = this->declare_parameter<std::string>("odom_name", "lidar_odom");
     base_frame_ = this->declare_parameter<std::string>("base_link_name", "lidar_link");
-    goal_pose_topic_ = this->declare_parameter<std::string>("goal_pose_topic_name", "/goal_pose");
+    goal_pose_topic_ = this->declare_parameter<std::string>("goal_pose_topic_name", "/target_position");
     stag_center_topic_ = this->declare_parameter<std::string>("stag_center_topic_name", "/stag_center");
     stag_detected_topic_ = this->declare_parameter<std::string>("stag_detected_topic_name", "/stag_detected");
     stair_direction_topic_ = this->declare_parameter<std::string>("stair_direction_topic_name", "/stair_direction");
     target_heading_topic_ = this->declare_parameter<std::string>("target_heading_topic_name", "/target_heading");
     arm_angles_topic_ = this->declare_parameter<std::string>("arm_angles_topic_name", "/arm_angles");
     yolo_offsets_topic_ = this->declare_parameter<std::string>("yolo_offsets_topic_name", "/yolo_detection_offsets");
-    action_code_topic_ = this->declare_parameter<std::string>("action_code_topic_name", "/stm32/action_code");
+    action_code_topic_ = this->declare_parameter<std::string>("action_code_topic_name", "/action_code");
     stm32_read_topic_ = this->declare_parameter<std::string>("stm32_read_topic", "stm32/read");
     stm32_write_topic_ = this->declare_parameter<std::string>("stm32_write_topic", "stm32/write");
     publish_ack_flag_ = this->declare_parameter<bool>("publish_ack_flag", true);

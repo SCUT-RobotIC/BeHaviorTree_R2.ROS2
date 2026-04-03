@@ -8,7 +8,10 @@
 #include "movetp_interface/action/move_to_position.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "std_msgs/msg/int16.hpp"
+#include "std_msgs/msg/u_int8.hpp"
 #include <atomic>
+#include <condition_variable>
+#include <mutex>
 namespace move_to_position
 {
 
@@ -28,8 +31,10 @@ private:
 
     rclcpp::Subscription<std_msgs::msg::Int16>::SharedPtr ACK_sub;
     rclcpp::Publisher<geometry_msgs::msg::Point>::SharedPtr target_position_pub_;
+    rclcpp::Publisher<std_msgs::msg::UInt8>::SharedPtr action_code_publisher_;
     rclcpp_action::Server<MoveToPosition>::SharedPtr move_to_position_action_server_;
     std::shared_ptr<rclcpp::TimerBase> timer;
+    std_msgs::msg::UInt8 action_msg_;
 
     std::atomic<int> ack_{0};
     std::condition_variable ack_cv_; 

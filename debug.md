@@ -9,3 +9,7 @@
 | `Node not recognized: TfListen` | Plugin registration name did not match XML node name | Register node as `"TfListen"` (or update XML to match). |
 | `Can't find a tree with name: GetBlockPose` right after tree load failure | Tree XML failed to load because of unrecognized node | Fix node names/ports and rebuild so tree can register. |
 | Action goal executed but tree still missing | Forgot to `source install/setup.bash` after rebuild | Re-source the workspace before launching and sending goals. |
+
+
+
+ros2 topipub /action_code std_msgs/msg/Byte "{data:[1]"}" --once

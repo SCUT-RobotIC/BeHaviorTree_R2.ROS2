@@ -8,10 +8,9 @@ namespace move_to_position
 MoveToPositionNode::MoveToPositionNode() : Node("move_to_position_node")
 {
     target_position_pub_ = this->create_publisher<geometry_msgs::msg::Point>("target_position", 10);
-    std_msgs::msg::UInt8 action_msg;
-    action_msg.data = 1;
-    action_code_publisher = this->create_publisher<std_msgs::msg::UInt8>(
-            '/stm32/action_code', 
+    action_msg_.data = 1;
+    action_code_publisher_ = this->create_publisher<std_msgs::msg::UInt8>(
+            "/stm32/action_code",
             10
         );
     ACK_sub = this->create_subscription<std_msgs::msg::Int16>(
@@ -44,6 +43,7 @@ rclcpp_action::GoalResponse MoveToPositionNode::handle_goal(const rclcpp_action:
 
 rclcpp_action::CancelResponse MoveToPositionNode::handle_cancel(const std::shared_ptr<rclcpp_action::ServerGoalHandle<MoveToPosition>> goal_handle)
 {
+    (void)goal_handle;
     RCLCPP_INFO(this->get_logger(), "Received request to cancel goal");
     return rclcpp_action::CancelResponse::ACCEPT;
 }
@@ -61,7 +61,7 @@ void MoveToPositionNode::execute(const std::shared_ptr<rclcpp_action::ServerGoal
     target_position.x = goal->goal.x;
     target_position.y = goal->goal.y;
     target_position.z = goal->goal.z;
-    this->action_code_publisher->publish(action_msg);
+    this->action_code_publisher_->publish(action_msg_);
 
     // 用定时器定时发布目标点，收到ack后停止定时器
     timer = this->create_wall_timer(
