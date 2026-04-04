@@ -176,25 +176,15 @@ void Stm32ControlNode::publish_packet(const serial_protocol::SerialPacket& packe
  * @brief 处理从串口层接收到的数据包（反序列化并更新内部状态）
  */
 void Stm32ControlNode::on_packet_received(const std_msgs::msg::UInt8MultiArray::SharedPtr msg) {
-    try {
-        serial_protocol::SerialPacket packet_struct = serial_protocol::deserialize_packet(msg->data);
+    int16_t ack_flag = 0;
+    if (!serial_protocol::try_deserialize_ack(msg->data, ack_flag)) {
+        RCLCPP_WARN(this->get_logger(), "Discarded malformed ACK packet, size=%zu", msg->data.size());
+        return;
+    }
 
-        if (publish_ack_flag_ && ack_flag_pub_) {
-            std_msgs::msg::Int16 ack_msg;
-            ack_msg.data = packet_struct.ack_flag;
-            ack_flag_pub_->publish(ack_msg);
-        }
-
-        {
-            std::lock_guard<std::mutex> lock(arm_mutex_);
-            arm_feedback_.joint1 = packet_struct.arm_joint1;
-            arm_feedback_.joint2 = packet_struct.arm_joint2;
-            arm_feedback_.joint3 = packet_struct.arm_joint3;
-            arm_feedback_.yaw = packet_struct.arm_yaw;
-            arm_feedback_.last_update_time = this->now();
-            has_arm_feedback_ = true;
-        }
-    } catch (const std::exception& e) {
-        RCLCPP_ERROR(this->get_logger(), "Failed to process received packet: %s", e.what());
+    if (publish_ack_flag_ && ack_flag_pub_) {
+        std_msgs::msg::Int16 ack_msg;
+        ack_msg.data = ack_flag;
+        ack_flag_pub_->publish(ack_msg);
     }
 }

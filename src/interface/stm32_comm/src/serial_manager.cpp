@@ -93,49 +93,50 @@ void SerialManager::read_loop() {
 
 void SerialManager::process_buffer() {
     while (receive_buffer_.size() >= serial_protocol::PACKET_SIZE) {
-        // 查找帧头位置
+        // ACK 回传仍带包头包尾，先定位帧头，再按固定帧长取包并校验帧尾。
         auto header_it = std::search(
             receive_buffer_.begin(), receive_buffer_.end(),
             serial_protocol::HEADER.begin(), serial_protocol::HEADER.end());
 
-        // 如果找不到帧头（帧头在缓冲区末尾），丢弃前面多余的字节（保留可能的部分帧头）
+        // 未找到帧头时保留最后一个字节，避免丢失潜在帧头前缀。
         if (header_it == receive_buffer_.end()) {
             size_t discard_count = receive_buffer_.size() - (serial_protocol::HEADER.size() - 1);
             if (discard_count > 0) {
                 receive_buffer_.erase(receive_buffer_.begin(), receive_buffer_.begin() + discard_count);
             }
-            return; 
+            return;
         }
 
-        // 如果帧头不在缓冲区开头，丢弃前面多余的字节
+        // 帧头前有噪声，先丢弃噪声并重新尝试。
         if (header_it != receive_buffer_.begin()) {
             receive_buffer_.erase(receive_buffer_.begin(), header_it);
-            continue; 
+            continue;
         }
 
-        // 检查是否有足够的字节组成完整帧
         if (receive_buffer_.size() < serial_protocol::PACKET_SIZE) {
-            return; 
+            return;
         }
 
         std::vector<uint8_t> packet_data(receive_buffer_.begin(), receive_buffer_.begin() + serial_protocol::PACKET_SIZE);
-        
-        // 验证帧尾
-        bool footer_match = std::equal(packet_data.end() - 2, packet_data.end(), serial_protocol::FOOTER.begin());
 
-        if (footer_match) {
-            // 调用回调：拷贝到局部变量以减小并发竞态（另一个线程可能正在修改成员回调）
-            auto cb = receive_callback_;
-            if (cb) {
-                try {
-                    cb(packet_data);
-                } catch (const std::exception& e) {
-                    RCLCPP_ERROR(logger_, "Receive callback threw exception: %s", e.what());
-                }
-            }
-            receive_buffer_.erase(receive_buffer_.begin(), receive_buffer_.begin() + serial_protocol::PACKET_SIZE);
-        } else {
+        bool footer_match = std::equal(packet_data.end() - serial_protocol::FOOTER.size(),
+                                       packet_data.end(),
+                                       serial_protocol::FOOTER.begin());
+        if (!footer_match) {
+            // 帧尾不匹配时仅丢弃 1 字节，尽快重新对齐后续数据。
             receive_buffer_.erase(receive_buffer_.begin());
+            continue;
         }
+
+        // 调用回调：拷贝到局部变量以减小并发竞态（另一个线程可能正在修改成员回调）
+        auto cb = receive_callback_;
+        if (cb) {
+            try {
+                cb(packet_data);
+            } catch (const std::exception& e) {
+                RCLCPP_ERROR(logger_, "Receive callback threw exception: %s", e.what());
+            }
+        }
+        receive_buffer_.erase(receive_buffer_.begin(), receive_buffer_.begin() + serial_protocol::PACKET_SIZE);
     }
 }

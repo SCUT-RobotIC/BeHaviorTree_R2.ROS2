@@ -19,7 +19,7 @@ const std::vector<uint8_t> HEADER = {0xAA, 0xAA};
 const std::vector<uint8_t> FOOTER = {0xBB, 0xBB};
 
 const size_t SEND_PACKET_SIZE = 64;
-const size_t RECV_PACKET_SIZE = 66;
+const size_t RECV_PACKET_SIZE = 6;  // 下位机回传: 头(2) + ACK(int16_t) + 尾(2)
 const size_t PACKET_SIZE = RECV_PACKET_SIZE;
 
 struct SerialPacket {
@@ -105,72 +105,22 @@ inline void serialize_packet(const SerialPacket& packet, std::vector<uint8_t>& b
   buffer[63] = packet.tail[1];
 }
 
-// 将接收到的字节向量反序列化为 SerialPacket 结构体
-inline SerialPacket deserialize_packet(const std::vector<uint8_t>& data_buffer) {
-  if (data_buffer.size() < RECV_PACKET_SIZE) {
-    throw std::runtime_error("Received data buffer is too small to deserialize a SerialPacket.");
+// 尝试将接收到的字节向量解析为 ACK（无异常版本）
+inline bool try_deserialize_ack(const std::vector<uint8_t>& data_buffer, int16_t& ack_flag) {
+  if (data_buffer.size() != RECV_PACKET_SIZE) {
+    return false;
   }
 
-  SerialPacket packet;
-
-  packet.head[0] = data_buffer[0];
-  packet.head[1] = data_buffer[1];
-  packet.action = utils::combine_bytes<int16_t>(&data_buffer[2]);
-  packet.ack_flag = utils::combine_bytes<int16_t>(&data_buffer[4]);
-  packet.x_real = utils::combine_bytes<int16_t>(&data_buffer[6]);
-  packet.y_real = utils::combine_bytes<int16_t>(&data_buffer[8]);
-  packet.x_target = utils::combine_bytes<int16_t>(&data_buffer[10]);
-  packet.y_target = utils::combine_bytes<int16_t>(&data_buffer[12]);
-  packet.target_heading = utils::combine_bytes<int16_t>(&data_buffer[14]);
-  packet.stair_direction = utils::combine_bytes<int16_t>(&data_buffer[16]);
-  packet.stag_x = utils::combine_bytes<int16_t>(&data_buffer[18]);
-  packet.stag_y = utils::combine_bytes<int16_t>(&data_buffer[20]);
-  packet.stag_detected = utils::combine_bytes<int16_t>(&data_buffer[22]);
-  packet.arm_send_count = utils::combine_bytes<int16_t>(&data_buffer[24]);
-  packet.arm_joint1 = utils::combine_bytes<int16_t>(&data_buffer[26]);
-  packet.arm_joint2 = utils::combine_bytes<int16_t>(&data_buffer[28]);
-  packet.arm_joint3 = utils::combine_bytes<int16_t>(&data_buffer[30]);
-  packet.arm_yaw = utils::combine_bytes<int16_t>(&data_buffer[32]);
-  packet.x_offset = utils::combine_bytes<int16_t>(&data_buffer[34]);
-  packet.y_offset = utils::combine_bytes<int16_t>(&data_buffer[36]);
-  packet.stair_lift_height = utils::combine_bytes<int16_t>(&data_buffer[38]);
-
-  for (size_t i = 0; i < 24; ++i) {
-    packet.reserved[i] = data_buffer[40 + i];
+  if (!(data_buffer[0] == HEADER[0] && data_buffer[1] == HEADER[1])) {
+    return false;
   }
 
-  packet.tail[0] = data_buffer[64];
-  packet.tail[1] = data_buffer[65];
-
-  return packet;
-}
-
-// 辅助函数：格式化 SerialPacket 内容为可读字符串（调试用）
-inline std::string format_packet_for_debug(const SerialPacket& packet, bool include_hex = true) {
-  std::stringstream ss;
-  ss << "Action: " << static_cast<int>(packet.action)
-     << ", ACK: " << static_cast<int>(packet.ack_flag)
-     << ", Real: (" << packet.x_real << "," << packet.y_real << ")"
-     << ", Target: (" << packet.x_target << "," << packet.y_target << ")"
-    << ", Heading: " << packet.target_heading
-    << ", StairDir: " << packet.stair_direction
-     << ", STAG: (" << packet.stag_x << "," << packet.stag_y << ")"
-     << ", Detected: " << static_cast<int>(packet.stag_detected)
-    << ", ArmSendCount: " << packet.arm_send_count
-    << ", Arm: [" << packet.arm_joint1/10.0 << "," << packet.arm_joint2/10.0 
-    << "," << packet.arm_joint3/10.0 << "," << packet.arm_yaw/10.0 << "]"
-    << ", StairLiftHeight(mm): " << packet.stair_lift_height
-    << ", YOLO Offset: (" << packet.x_offset << "," << packet.y_offset << ")";
-
-  if (include_hex) {
-    ss << "\nHEX (Sender fmt): ";
-    std::vector<uint8_t> buffer;
-    serialize_packet(packet, buffer);
-    for (const auto& byte : buffer) {
-      ss << "0x" << std::setfill('0') << std::setw(2) << std::hex << static_cast<int>(byte) << " ";
-    }
+  if (!(data_buffer[4] == FOOTER[0] && data_buffer[5] == FOOTER[1])) {
+    return false;
   }
-  return ss.str();
+
+  ack_flag = utils::combine_bytes<int16_t>(&data_buffer[2]);
+  return true;
 }
 
 } // namespace serial_protocol
