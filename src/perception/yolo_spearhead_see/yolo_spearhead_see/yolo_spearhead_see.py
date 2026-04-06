@@ -93,7 +93,7 @@ class YOLOSpearheadSeeNode(Node):
         # 发布动作码
         self.action_code_publisher = self.create_publisher(
             Int16,
-            '/stm32/action_code', 
+            '/action_code', 
             10
         )
 

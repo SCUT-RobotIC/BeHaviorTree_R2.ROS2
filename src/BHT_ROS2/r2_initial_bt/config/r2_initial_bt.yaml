@@ -1,0 +1,15 @@
+bt_executor:
+  ros__parameters:
+    odom_topic: /aft_mapped_to_init
+    rgb_topic: /camera/camera/color/image_raw
+    depth_topic: /camera/camera/aligned_depth_to_color/image_raw
+    terraced_camera_topic: /terraced_camera_image
+    model_ready_topic: /pose_est/model_ready
+
+    output_pose_position_x: 800.0
+    output_pose_position_y: 0.0
+    output_pose_position_z: 0.0
+    output_pose_orientation_x: 0.0
+    output_pose_orientation_y: 0.0
+    output_pose_orientation_z: 0.0
+    output_pose_orientation_w: 1.0

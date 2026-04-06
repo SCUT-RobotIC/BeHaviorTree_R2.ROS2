@@ -10,6 +10,7 @@ find_package(ament_cmake REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(behaviortree_ros2 REQUIRED)
 find_package(geometry_msgs REQUIRED)
+find_package(std_msgs REQUIRED)
 
 add_library(r2_initial_bt_nodes SHARED
   src/r2_initial_nodes.cpp
@@ -25,6 +26,7 @@ ament_target_dependencies(r2_initial_bt_nodes
   rclcpp
   behaviortree_ros2
   geometry_msgs
+  std_msgs
 )
 
 target_compile_definitions(r2_initial_bt_nodes PRIVATE BT_PLUGIN_EXPORT)
@@ -35,6 +37,10 @@ install(TARGETS r2_initial_bt_nodes
 
 install(DIRECTORY include/
   DESTINATION include
+)
+
+install(DIRECTORY config/
+  DESTINATION share/${PROJECT_NAME}/config
 )
 
 if(BUILD_TESTING)

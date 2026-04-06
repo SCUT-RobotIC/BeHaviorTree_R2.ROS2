@@ -15,7 +15,6 @@ import sensor_msgs.msg
 import message_filters
 from .Utils import *
 import imageio
-from pose_interface.srv import ArmSolve
 from ament_index_python.packages import get_package_share_directory
 import logging
 
@@ -71,8 +70,6 @@ class AutoTracker(Node):
         self.ts.registerCallback(self.pose_track_callback)
         # 发布姿态话题
         self.foundationpose_pub = self.create_publisher(Pose, '/foundationpose/pose', 10)
-        # 机械臂解算服务客户端
-        self.arm_client = self.create_client(ArmSolve, 'solve_arm_ik')
         
         # CvBridge 用于 ROS 图像消息与 OpenCV 图像之间转换
         self.bridge = cv_bridge.CvBridge()
@@ -140,8 +137,6 @@ class AutoTracker(Node):
         if self.last_pose is not None:
             pos = matrix_to_pose_msg(self.last_pose)
             self.foundationpose_pub.publish(pos)
-            # 请求机械臂解算
-            self.call_arm_solve_service(pos)
         else:
              self.get_logger().warn("No valid pose to publish.")
 
@@ -280,31 +275,6 @@ class AutoTracker(Node):
         else:
             self.last_pose = pose
             self.track_loss_count = 0
-    
-    # 调用机械臂解算服务
-    def call_arm_solve_service(self, pose_msg):
-        if not self.arm_client.service_is_ready():
-            # 避免刷屏，可以用 debug
-            self.get_logger().debug('Arm service not ready, skipping...')
-            return
-            
-        request = ArmSolve.Request()
-        request.x = pose_msg.position.x
-        request.y = pose_msg.position.y
-        request.z = pose_msg.position.z
-        
-        future = self.arm_client.call_async(request)
-        future.add_done_callback(self.arm_solve_done_callback)
-        
-    def arm_solve_done_callback(self, future):
-        try:
-            response = future.result()
-            if response.success:
-                self.get_logger().info(f'Arm IK Solved: {response.message}')
-            else:
-                self.get_logger().warn(f'Arm IK Failed: {response.message}')
-        except Exception as e:
-            self.get_logger().error(f'Service call failed: {e}')
     
     # 释放资源，避免内存泄漏，显存碎片化
     def destroy_node(self):

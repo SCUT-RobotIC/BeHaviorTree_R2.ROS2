@@ -21,6 +21,11 @@ R2InitialNode::R2InitialNode(const std::string& name, const BT::NodeConfig& conf
   node_->declare_parameter<double>("output_pose_orientation_y", 0.0);
   node_->declare_parameter<double>("output_pose_orientation_z", 0.0);
   node_->declare_parameter<double>("output_pose_orientation_w", 1.0);
+  node_->declare_parameter<std::string>("odom_topic", "/aft_mapped_to_init");
+  node_->declare_parameter<std::string>("rgb_topic", "/camera/camera/color/image_raw");
+  node_->declare_parameter<std::string>("depth_topic", "/camera/camera/aligned_depth_to_color/image_raw");
+  node_->declare_parameter<std::string>("terraced_camera_topic", "/terraced_camera_image");
+  node_->declare_parameter<std::string>("model_ready_topic", "/pose_est/model_ready");
 }
 
 BT::PortsList R2InitialNode::providedPorts()
@@ -34,7 +39,7 @@ BT::PortsList R2InitialNode::providedPorts()
 BT::NodeStatus R2InitialNode::onStart()
 {
   received_count_.store(0);
-  expected_count_ = 4;
+  expected_count_ = 5;
   received_flags_.clear();
   received_flags_.reserve(expected_count_);
   start_time_ = std::chrono::steady_clock::now();
@@ -47,10 +52,23 @@ BT::NodeStatus R2InitialNode::onStart()
     received_flags_.push_back(std::make_shared<std::atomic_bool>(false));
   }
 
-  createSubscription("/aft_mapped_to_init", "nav_msgs/msg/Odometry", 10, received_flags_[0]);
-  createSubscription("/camera/camera/color/image_raw", "sensor_msgs/msg/Image", 10, received_flags_[1]);
-  createSubscription("/camera/camera/aligned_depth_to_color/image_raw", "sensor_msgs/msg/Image", 10, received_flags_[2]);
-  createSubscription("/terraced_camera_image", "sensor_msgs/msg/Image", 10, received_flags_[3]);
+  std::string odom_topic;
+  std::string rgb_topic;
+  std::string depth_topic;
+  std::string terraced_camera_topic;
+  std::string model_ready_topic;
+
+  node_->get_parameter("odom_topic", odom_topic);
+  node_->get_parameter("rgb_topic", rgb_topic);
+  node_->get_parameter("depth_topic", depth_topic);
+  node_->get_parameter("terraced_camera_topic", terraced_camera_topic);
+  node_->get_parameter("model_ready_topic", model_ready_topic);
+
+  createSubscription(odom_topic, "nav_msgs/msg/Odometry", 10, received_flags_[0]);
+  createSubscription(rgb_topic, "sensor_msgs/msg/Image", 10, received_flags_[1]);
+  createSubscription(depth_topic, "sensor_msgs/msg/Image", 10, received_flags_[2]);
+  createSubscription(terraced_camera_topic, "sensor_msgs/msg/Image", 10, received_flags_[3]);
+  createModelReadySubscription(model_ready_topic, received_flags_[4]);
 
   output_pose_ = geometry_msgs::msg::Pose();
   // 通过参数赋值
@@ -122,9 +140,27 @@ void R2InitialNode::createSubscription(const std::string& topic_name,
   subscriptions_.push_back(subscription);
 }
 
+void R2InitialNode::createModelReadySubscription(
+  const std::string& topic_name,
+  const std::shared_ptr<std::atomic_bool>& received_flag)
+{
+  auto qos = rclcpp::QoS(rclcpp::KeepLast(1)).reliable().transient_local();
+  model_ready_subscription_ = node_->create_subscription<std_msgs::msg::Bool>(
+    topic_name,
+    qos,
+    [this, received_flag](const std_msgs::msg::Bool::SharedPtr msg)
+    {
+      if (msg->data && !received_flag->exchange(true))
+      {
+        received_count_.fetch_add(1);
+      }
+    });
+}
+
 void R2InitialNode::resetSubscriptions()
 {
   subscriptions_.clear();
+  model_ready_subscription_.reset();
 }
 
 }  // namespace r2_initial

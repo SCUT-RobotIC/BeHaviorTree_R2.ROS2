@@ -1,0 +1,6 @@
+bt_executor:
+  ros__parameters:
+    camera_stag_need: false
+    position3_x: 10.0
+    position3_y: 20.0
+    position3_z: 30.0

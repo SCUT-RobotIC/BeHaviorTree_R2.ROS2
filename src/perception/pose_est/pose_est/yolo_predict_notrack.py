@@ -2,6 +2,7 @@ import rclpy
 from rclpy.node import Node
 from rclpy.executors import MultiThreadedExecutor
 from rclpy.callback_groups import ReentrantCallbackGroup
+from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSDurabilityPolicy, QoSHistoryPolicy
 import trimesh
 import cv2
 from ultralytics import YOLO
@@ -15,11 +16,11 @@ import tf_transformations as tf
 import cv_bridge
 import sensor_msgs.msg
 import message_filters
+from std_msgs.msg import Bool
 from .Utils import *
 import imageio
 import logging
 from datetime import datetime
-from pose_interface.srv import ArmSolve
 from foundationpose_interface.srv import PoseSolve
 # from trtyolo import TRTYOLO
 from ament_index_python.packages import get_package_share_directory
@@ -78,8 +79,15 @@ class AutoTracker(Node):
         self.ts.registerCallback(self.pose_track_callback)
         # 发布姿态话题
         self.foundationpose_pub = self.create_publisher(Pose, '/foundationpose/pose', 10)
-        # 机械臂解算服务客户端
-        self.arm_client = self.create_client(ArmSolve, 'solve_arm_ik', callback_group=self.cb_group)
+        # 发布模型就绪状态（transient_local，便于晚加入订阅者立即拿到最后状态）
+        ready_qos = QoSProfile(
+            history=QoSHistoryPolicy.KEEP_LAST,
+            depth=1,
+            reliability=QoSReliabilityPolicy.RELIABLE,
+            durability=QoSDurabilityPolicy.TRANSIENT_LOCAL,
+        )
+        self.model_ready_pub = self.create_publisher(Bool, '/pose_est/model_ready', ready_qos)
+        self._publish_model_ready(False)
         # 通讯服务
         self.comm_srv = self.create_service(PoseSolve, 'solve_pose', self.comm_trigger_callback, callback_group=self.cb_group)
         
@@ -124,6 +132,7 @@ class AutoTracker(Node):
             self.sam_predictor = SamPredictor(self.sam)
         except Exception as e:
             self.get_logger().error(f"SAM model loading failed: {e}")
+            self._publish_model_ready(False)
             raise e
         # FoundationPose 配置
         self.est = FoundationPose(  model_pts=self.mesh.vertices, 
@@ -138,6 +147,12 @@ class AutoTracker(Node):
         self.latest_rgb = None
         self.latest_depth = None
         self.latest_K = self.K
+        self._publish_model_ready(True)
+
+    def _publish_model_ready(self, ready: bool):
+        msg = Bool()
+        msg.data = bool(ready)
+        self.model_ready_pub.publish(msg)
 
     # 主回调函数，处理同步的 RGB 和 深度 图像
     def pose_track_callback(self, rgb_msg: sensor_msgs.msg.Image, depth_msg: sensor_msgs.msg.Image):
@@ -174,6 +189,9 @@ class AutoTracker(Node):
     def comm_trigger_callback(self, request, response):
         # 仅当request.need为True时才进行姿态结算，否则直接返回
         try:
+            response.x = 0.0
+            response.y = 0.0
+            response.z = 0.0
             if hasattr(request, 'need') and request.need:
                 self.get_logger().info("Received comm trigger request: need=True, running SAM+FoundationPose init...")
                 if self.latest_rgb is None or self.latest_depth is None:
@@ -246,21 +264,11 @@ class AutoTracker(Node):
                         self.get_logger().info(f"Saved pose box image: {pose_path}")
                     except Exception as e:
                         self.get_logger().warning(f"Failed to save pose box image: {e}")
-                    # 请求机械臂逆解服务，参数用姿态解算结果
-                    arm_request = ArmSolve.Request()
-                    arm_request.x = pos_msg.position.x
-                    arm_request.y = pos_msg.position.y
-                    arm_request.z = pos_msg.position.z
-                    if not self.arm_client.wait_for_service(timeout_sec=0.5):
-                        self.get_logger().warning('solve_arm_ik service is not available, skip IK call this cycle.')
-                        response.success = False
-                        return response
-                    arm_response = self.arm_client.call(arm_request)
-                    response.success = arm_response.success
-                    response.theta_sum1 = arm_response.theta_sum1
-                    response.theta_sum2 = arm_response.theta_sum2
-                    response.theta_sum3 = arm_response.theta_sum3
-                    response.theta_sum_yaw = arm_response.theta_sum_yaw
+                    # 解耦后该服务仅负责感知，机械臂逆解由独立节点/行为树处理。
+                    response.success = True
+                    response.x = float(pos_msg.position.x)
+                    response.y = float(pos_msg.position.y)
+                    response.z = float(pos_msg.position.z)
                 else:
                     response.success = False
             else:
@@ -274,6 +282,7 @@ class AutoTracker(Node):
     def destroy_node(self):
         # 显式释放大模型和 GPU 资源
         try:
+            self._publish_model_ready(False)
             if hasattr(self, 'sam_predictor'):
                 del self.sam_predictor
             torch.cuda.empty_cache()

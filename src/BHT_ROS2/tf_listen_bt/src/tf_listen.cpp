@@ -17,6 +17,18 @@ TfListenNode::TfListenNode(const std::string& name, const BT::NodeConfig& config
 		throw std::runtime_error("TfListenNode requires a valid rclcpp::Node");
 	}
 
+	node_->declare_parameter<double>("tf_listen_xy_error", 0.2);
+	node_->declare_parameter<double>("tf_listen_timeout", 0.0);
+	node_->declare_parameter<std::string>("tf_listen_target_frame", "lidar_link");
+	node_->declare_parameter<std::string>("tf_listen_source_frame", "lidar_odom");
+	
+
+	node_->get_parameter("tf_listen_xy_error", xy_error_);
+	node_->get_parameter("tf_listen_timeout", default_timeout_);
+	node_->get_parameter("tf_listen_target_frame", default_target_frame_);
+	node_->get_parameter("tf_listen_source_frame", default_source_frame_);
+	
+
 	tf_buffer_ = std::make_unique<tf2_ros::Buffer>(node_->get_clock());
 	tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 }
@@ -25,9 +37,9 @@ BT::PortsList TfListenNode::providedPorts()
 {
 	return {
 		BT::InputPort<geometry_msgs::msg::Pose>("Target_Position"),
-		BT::InputPort<std::string>("target_frame", "lidar_link", "TF target frame"),
-		BT::InputPort<std::string>("source_frame", "lidar_odom", "TF source frame"),
-		BT::InputPort<double>("timeout", 0.0, "Lookup timeout seconds"),
+		BT::InputPort<std::string>("target_frame", "TF target frame override"),
+		BT::InputPort<std::string>("source_frame", "TF source frame override"),
+		BT::InputPort<double>("timeout", "Lookup timeout seconds override"),
 	};
 }
 
@@ -39,37 +51,37 @@ BT::NodeStatus TfListenNode::tick()
 		return BT::NodeStatus::FAILURE;
 	}
 
-	auto target_frame = getInput<std::string>("target_frame");
-	if(!target_frame)
+	std::string target_frame = default_target_frame_;
+	if(auto input_target_frame = getInput<std::string>("target_frame"))
 	{
-		return BT::NodeStatus::FAILURE;
+		target_frame = input_target_frame.value();
 	}
 
-	auto source_frame = getInput<std::string>("source_frame");
-	if(!source_frame)
+	std::string source_frame = default_source_frame_;
+	if(auto input_source_frame = getInput<std::string>("source_frame"))
 	{
-		return BT::NodeStatus::FAILURE;
+		source_frame = input_source_frame.value();
 	}
 
-	auto timeout = getInput<double>("timeout");
-	if(!timeout)
+	double timeout = default_timeout_;
+	if(auto input_timeout = getInput<double>("timeout"))
 	{
-		return BT::NodeStatus::FAILURE;
+		timeout = input_timeout.value();
 	}
 
 	try
 	{
 		geometry_msgs::msg::TransformStamped transform;
-		if(timeout.value() > 0.0)
+		if(timeout > 0.0)
 		{
 			transform = tf_buffer_->lookupTransform(
-				target_frame.value(), source_frame.value(), tf2::TimePointZero,
-				tf2::durationFromSec(timeout.value()));
+				target_frame, source_frame, tf2::TimePointZero,
+				tf2::durationFromSec(timeout));
 		}
 		else
 		{
 			transform = tf_buffer_->lookupTransform(
-				target_frame.value(), source_frame.value(), tf2::TimePointZero);
+				target_frame, source_frame, tf2::TimePointZero);
 		}
 
 		geometry_msgs::msg::Pose Position_Now;
@@ -79,8 +91,8 @@ BT::NodeStatus TfListenNode::tick()
 		Position_Now.orientation = transform.transform.rotation;
 
 		const bool within_xy_error =
-			std::abs(Position_Now.position.x - target_pose.value().position.x) <= error &&
-			std::abs(Position_Now.position.y - target_pose.value().position.y) <= error;
+			std::abs(Position_Now.position.x - target_pose.value().position.x) <= xy_error_ &&
+			std::abs(Position_Now.position.y - target_pose.value().position.y) <= xy_error_;
 
 		return within_xy_error ? BT::NodeStatus::SUCCESS : BT::NodeStatus::FAILURE;
 	}

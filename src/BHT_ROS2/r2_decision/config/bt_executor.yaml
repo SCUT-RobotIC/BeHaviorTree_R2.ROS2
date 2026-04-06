@@ -7,17 +7,9 @@ bt_executor:
       - tf_listen_bt/lib
       - pose_est_bt/lib
       - camera_stag_bt/lib
+      - robot_arm_bt/lib
       - yolo_spearhead_see_bt/lib
       - move_to_position_bt/lib
     behavior_trees:
       - r2_decision/behavior_trees
-
-    r2_initial_bt:
-      output_pose_position_x: 800.0
-      output_pose_position_y: 0.0
-      output_pose_position_z: 0.0
-      output_pose_orientation_x: 0.0
-      output_pose_orientation_y: 0.0
-      output_pose_orientation_z: 0.0
-      output_pose_orientation_w: 1.0
 

@@ -27,7 +27,10 @@
 	 std::shared_ptr<rclcpp::Node> node_;
 	 std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
 	 std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-	 double error = 0.2;  // Allowed XY position error
+	 std::string default_target_frame_ = "lidar_link";
+	 std::string default_source_frame_ = "lidar_odom";
+	 double xy_error_ = 0.2;  // Allowed XY position error
+	 double default_timeout_ = 0.0;
  };
 
  }  // namespace tf_listen_bt

@@ -276,3 +276,36 @@ reset() 是 std::unique_ptr 的成员函数。简要要点：
 	exchange无条件交换：直接写入新值
 
     重排（Reordering） 是指 编译器或 CPU 改变代码执行顺序 的优化行为，以提高性能。
+
+    绝对名（以 / 开头）：不会被节点的 namespace 隐式前缀化，例如 /ACK 始终解析为 /ACK（除非显式 remap 改写）。
+
+相对名（不以 / 或 ~ 开头）：会被节点的 namespace 前缀化。例如节点在命名空间 /robot1 下：
+
+话题名 ACK → 解析为 /robot1/ACK
+私有名（以 ~ 开头）：相对于节点的 namespace 与节点名，例如节点名 node1、namespace /robot1：
+
+~ACK → /robot1/node1/ACK
+另外：显式 remap（launch 或 CLI 的 -r）可以把任意名称（包括绝对名）映射到另一个名字。
+这里要分 3 个名字：
+
+package="btcpp_ros2_samples"
+这是包名。
+
+executable="sample_bt_executor"
+这是运行的可执行程序文件名（进程入口）。
+
+name="bt_executor"
+这是 ROS 节点名（参数匹配、topic namespace、ros2 node list 看到的名字）。
+
+你问“节点名指哪个”：
+
+对 yaml 顶层键匹配来说，看的是 name="bt_executor" 这个 ROS 节点名。
+不是 sample_bt_executor。
+“宿主节点是啥”：
+
+宿主节点就是这个 launch 里创建出来的 ROS 节点 bt_executor。
+r2_initial_bt 这类 BT 插件是在这个宿主节点进程里被加载和运行的。
+所以插件读取到的是 /bt_executor 这个节点的参数空间。
+一句话：
+插件参数要写到 bt_executor 这个节点名下，而不是写成 sample_bt_executor。
+/**: 在 ROS2 参数文件里表示“通配所有节点（全局匹配）”。

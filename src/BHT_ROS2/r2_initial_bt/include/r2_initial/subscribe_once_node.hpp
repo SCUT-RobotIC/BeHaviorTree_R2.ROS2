@@ -10,6 +10,7 @@
 #include "behaviortree_ros2/ros_node_params.hpp"
 #include "geometry_msgs/msg/pose.hpp"
 #include "rclcpp/rclcpp.hpp"
+#include "std_msgs/msg/bool.hpp"
 
 namespace r2_initial
 {
@@ -31,10 +32,13 @@ private:
                           const std::string& topic_type,
                           std::size_t qos_depth,
                           const std::shared_ptr<std::atomic_bool>& received_flag);
+  void createModelReadySubscription(const std::string& topic_name,
+                                    const std::shared_ptr<std::atomic_bool>& received_flag);
   void resetSubscriptions();
 
   std::shared_ptr<rclcpp::Node> node_;
   std::vector<rclcpp::GenericSubscription::SharedPtr> subscriptions_;
+  rclcpp::Subscription<std_msgs::msg::Bool>::SharedPtr model_ready_subscription_;
   std::vector<std::shared_ptr<std::atomic_bool>> received_flags_;
   std::atomic<int> received_count_{0};
   std::size_t expected_count_{0};

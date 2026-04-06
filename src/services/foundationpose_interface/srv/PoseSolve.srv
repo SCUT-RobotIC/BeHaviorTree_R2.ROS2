@@ -1,7 +1,6 @@
 bool need
 ---
-float64[] theta_sum1
-float64[] theta_sum2
-float64[] theta_sum3
-float64[] theta_sum_yaw
+float x
+float y
+float z
 bool success

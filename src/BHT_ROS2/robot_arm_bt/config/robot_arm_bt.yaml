@@ -1,0 +1,3 @@
+bt_executor:
+  ros__parameters:
+    robot_arm_service_name: solve_arm_ik
